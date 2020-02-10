@@ -16,7 +16,7 @@ class Score:
     def __init__(self):
         self.properties = {}
         self.log = []
-        self.score = {}
+        self.score = []
         self.zone = []
         self.section = {}
 
@@ -42,6 +42,9 @@ def read_score(file_name):
     zone_data = {}
     current_minute = 0
     current_seconds = 0.0
+
+    song = ""
+    phon = ""
 
     is_in_song = False
     for line in lines:
@@ -71,7 +74,7 @@ def read_score(file_name):
             continue
 
         if not is_in_song:
-            score.log.append([Score.LOG_WARN, [line, "Unknown text outside song section!"]])
+            score.log.append([Score.LOG_ERROR, [line, "Unknown text outside song section!"]])
             score.properties = {}
             score.score = []
             score.zone = []
@@ -84,8 +87,19 @@ def read_score(file_name):
             continue
 
         # Seconds
+        # At seconds setting line, song and phon data will be saved instantly
         if line.startswith("*"):
             line = line[1:]
+
+            if len(song) != 0:
+                if len(phon) == 0:
+                    score.log.append([Score.LOG_ERROR, [line, "No pronunciation data!"]])
+                    score.properties = {}
+                    score.score = []
+                    break
+                score.score.append([60 * current_minute + current_seconds, song, phon])
+                song = ""
+                phon = ""
             current_seconds = float(line)
             continue
 
@@ -129,7 +143,18 @@ def read_score(file_name):
                     del zone_data[zone_name]
                     continue
 
-        set_val_to_dictionary(score.score, 60 * current_minute + current_seconds, line)
+
+        # Phonenics
+        if line.startswith(":"):
+            line = line[1:]
+            if len(phon) != 0:
+                score.log.append([Score.LOG_WARN, [line, "Pronunciation string overwrited: {} into {}.".format(song, line)]])
+            phon = line
+            continue
+
+        if len(song) != 0:
+            score.log.append([Score.LOG_WARN, [line, "Song string overwrited: {} into {}.".format(song, line)]])
+        song = line
 
     return score
 
