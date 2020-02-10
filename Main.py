@@ -171,49 +171,58 @@ def main():
     alphabet_font = pygame.font.Font("mplus-1m-medium.ttf", 32)
     system_font = pygame.font.Font("mplus-1m-medium.ttf", 16)
 
-    # TODO: Read from file
     score_data = read_score("test_music_text.tsc")
-
-    return
-    # After here no works well :/
 
     count = 0
     missed = 0
 
     mainloop_continues = True
-    while mainloop_continues:
+    for score in score_data.score:
 
-        screen.fill((0, 0, 0))
+        full = score[1]
+        target_kana = score[2]
+        target_roma = Romautil.hira2roma(target_kana)
 
-        pygame_misc.print_str(screen, 5, 0, nihongo_font, target_kana)
-        pygame_misc.print_str(screen, 5, 65, alphabet_font, target_roma)
-        pygame_misc.print_str(screen, 5, 100, system_font, "Typed: {}".format(count))
-        pygame_misc.print_str(screen, 5, 120, system_font, "Miss: {}".format(missed))
+        sentence_continues = True
 
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                mainloop_continues = False
-                break
-            if event.type == KEYDOWN:
+        while mainloop_continues and sentence_continues:
 
-                # filter event -- if alphabet, number, or "-" key pressed
-                if Romautil.is_readable_key_pressed(event.key):
+            screen.fill((0, 0, 0))
 
-                    # if correct key was pushed
-                    if target_roma[0] == chr(event.key):
-                        target_roma = target_roma[1:]
-                        target_kana = Romautil.get_not_halfway_hr(target_kana, target_roma)
-                        count += 1
-                    else:
-                        missed += 1
+            pygame_misc.print_str(screen, 5, 0, nihongo_font, target_kana)
+            pygame_misc.print_str(screen, 5, 65, alphabet_font, target_roma)
+            pygame_misc.print_str(screen, 5, 100, system_font, "Typed: {}".format(count))
+            pygame_misc.print_str(screen, 5, 120, system_font, "Miss: {}".format(missed))
 
-                if event.key == K_ESCAPE:
+            for event in pygame.event.get():
+                if event.type == QUIT:
                     mainloop_continues = False
                     break
+                if event.type == KEYDOWN:
 
-        # 60fps
-        pygame.time.wait(1000 // 60)
-        pygame.display.update()
+                    # filter event -- if alphabet, number, or "-" key pressed
+                    if Romautil.is_readable_key_pressed(event.key):
+
+                        # if correct key was pushed
+                        if target_roma[0] == chr(event.key):
+                            target_roma = target_roma[1:]
+                            target_kana = Romautil.get_not_halfway_hr(target_kana, target_roma)
+                            count += 1
+                        else:
+                            missed += 1
+
+                        # Completed!
+                        if len(target_roma) == 0:
+                            sentence_continues = False
+                            break
+
+                    if event.key == K_ESCAPE:
+                        mainloop_continues = False
+                        break
+
+            # 60fps
+            pygame.time.wait(1000 // 60)
+            pygame.display.update()
 
     pygame.quit()
     sys.exit()
