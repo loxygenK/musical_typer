@@ -16,7 +16,8 @@ class Score:
     def __init__(self):
         self.properties = {}
         self.log = []
-        self.score = []
+        self.score = {}
+        self.zone = []
 
 
 def set_val_to_dictionary(dict, key, value):
@@ -37,6 +38,7 @@ def read_score(file_name):
     re_rect_blacket = re.compile(r"\[(.*)\]")
 
     score_data = []
+    zone_data = {}
     current_minute = 0
     current_seconds = 0.0
 
@@ -51,7 +53,7 @@ def read_score(file_name):
         if len(line) == 0: continue
 
         # Song property
-        if line.startswith(":"):
+        if line.startswith(":") and not is_in_song:
             line = line[1:]
             key, value = line.split()
             set_val_to_dictionary(score.properties, key, value)
@@ -70,7 +72,8 @@ def read_score(file_name):
         if not is_in_song:
             score.log.append([Score.LOG_WARN, [line, "Unknown text outside song section!"]])
             score.properties = {}
-            score.score = {}
+            score.score = []
+            score.zone = []
             break
 
         # Minute
@@ -85,7 +88,31 @@ def read_score(file_name):
             current_seconds = float(line)
             continue
 
-        score.score.append([60 * current_minute + current_seconds, line])
+        if line.startswith("!"):
+            line = line[1:]
+            flag, zone_name = line.split()
+
+            if flag == "start":
+                if zone_name in zone_data.keys():
+                    score.log.append([Score.LOG_ERROR, [line, "Nest of the same name zone!"]])
+                    score.properties = {}
+                    score.score = []
+                    score.zone = []
+                    break
+                else:
+                    set_val_to_dictionary(zone_data, zone_name, 60 * current_minute + current_seconds)
+            elif flag == "end":
+                if zone_name not in zone_data.keys():
+                    score.log.append([Score.LOG_ERROR, [line, "Suddenly unknown zone appeared!"]])
+                    score.properties = {}
+                    score.score = []
+                    score.zone = []
+                    break
+                else:
+                    score.zone.append([zone_data[zone_name], 60 * current_minute + current_seconds, zone_name])
+                    del zone_data[zone_name]
+
+        set_val_to_dictionary(score.score, 60 * current_minute + current_seconds, line)
 
     return score
 
