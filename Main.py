@@ -18,6 +18,7 @@ class Score:
         self.log = []
         self.score = {}
         self.zone = []
+        self.section = {}
 
 
 def set_val_to_dictionary(dict, key, value):
@@ -88,6 +89,20 @@ def read_score(file_name):
             current_seconds = float(line)
             continue
 
+        if line.startswith("@"):
+            line = line[1:]
+            if line in score.section:
+                score.log.append([Score.LOG_ERROR, [line, "Duplicated Section Name!"]])
+                score.properties = {}
+                score.score = []
+                score.zone = []
+                break
+            else:
+                set_val_to_dictionary(score.section, line, 60 * current_minute + current_seconds)
+
+            continue
+
+
         if line.startswith("!"):
             line = line[1:]
             flag, zone_name = line.split()
@@ -98,19 +113,21 @@ def read_score(file_name):
                     score.properties = {}
                     score.score = []
                     score.zone = []
+                    break
                 else:
                     set_val_to_dictionary(zone_data, zone_name, 60 * current_minute + current_seconds)
-                break
+                    continue
             elif flag == "end":
                 if zone_name not in zone_data.keys():
                     score.log.append([Score.LOG_ERROR, [line, "Suddenly unknown zone appeared!"]])
                     score.properties = {}
                     score.score = []
                     score.zone = []
+                    break
                 else:
                     score.zone.append([zone_data[zone_name], 60 * current_minute + current_seconds, zone_name])
                     del zone_data[zone_name]
-                break
+                    continue
 
         set_val_to_dictionary(score.score, 60 * current_minute + current_seconds, line)
 
