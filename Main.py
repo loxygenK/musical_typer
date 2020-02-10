@@ -15,8 +15,8 @@ CLEAR_POINT = 50
 MISS_POINT = -30
 COULDNT_TYPE_POINT = -2
 
+pygame.mixer.pre_init(44100, 16, 2, 1024)
 pygame.init()
-pygame.mixer.pre_init(44100, 16, 2, 4096)
 pygame.mixer.init()
 
 class Score:
@@ -154,20 +154,11 @@ def read_score(file_name):
             flag, zone_name = line.split()
 
             if flag == "start":
-                if zone_name in zone_data.keys():
-                    score.log_error(line, "Nest of the same name zone!")
-                    break
-                else:
-                    set_val_to_dictionary(zone_data, zone_name, 60 * current_minute + current_seconds)
-                    continue
+                score.zone.append([60 * current_minute + current_seconds, zone_name, "start"])
+                continue
             elif flag == "end":
-                if zone_name not in zone_data.keys():
-                    score.log_error(line, "Suddenly unknown zone appeared!")
-                    break
-                else:
-                    score.zone.append([zone_data[zone_name], 60 * current_minute + current_seconds, zone_name])
-                    del zone_data[zone_name]
-                    continue
+                score.zone.append([60 * current_minute + current_seconds, zone_name, "end"])
+                continue
 
         # Phonenics
         if line.startswith(":"):
@@ -212,16 +203,24 @@ def main():
     pygame.mixer.music.get_pos()
 
     lyrincs_index = -1
+    zone_index = -1
+    lyrincs_index = -1
     target_kana = ""
     target_roma = ""
     full = ""
 
     point = 0
     sent_miss = 0
+    sent_count = 0
     completed = False
+
+    latest_missrate = 0
+    latest_missrate_col = (0, 0, 0)
+    missrate_col = (255, 0, 0)
 
     next_income = score_data.score[0][0]
 
+    current_zone = ""
     while mainloop_continues:
 
         pos = pygame.mixer.music.get_pos() / 1000
@@ -238,12 +237,32 @@ def main():
             full = score_data.score[lyrincs_index][1]
             target_kana = score_data.score[lyrincs_index][2]
             target_roma = Romautil.hira2roma(target_kana)
+            sent_count= 0
             sent_miss = 0
             completed = False
+            latest_missrate = missrate
+            latest_missrate_col = missrate_col
+            missrate = 0
+            missrate_col = (255, 0, 0)
+
+        if score_data.zone[zone_index + 1][0] <= pos:
+            zone_index += 1
+
+            if score_data.zone[zone_index][2] == "start":
+                current_zone = score_data.zone[zone_index][1]
+            else:
+                current_zone = ""
 
         sentence_continues = True
 
         screen.fill((0, 0, 0))
+
+
+        w, h = pygame.display.get_surface().get_size()
+        ratio = (next_income - pos) / (next_income - score_data.score[lyrincs_index][0])
+        missrate = sent_count / ((sent_miss + sent_count) if sent_miss + sent_count > 0 else 1)
+
+        pygame.draw.rect(screen, (128, 0, 0), (0, 0, math.floor(ratio * w), 120))
 
         pygame_misc.print_str(screen, 5, 0, nihongo_font, target_kana)
         pygame_misc.print_str(screen, 5, 55, full_font, full, (192, 192, 192))
@@ -252,16 +271,13 @@ def main():
         pygame_misc.print_str(screen, 5, 150, system_font, "Miss: {}".format(missed))
         pygame_misc.print_str(screen, 5, 170, system_font, "Sent: {}".format(sent_miss))
         pygame_misc.print_str(screen, 5, 190, full_font, "Score: {}".format(point))
+        pygame_misc.print_str(screen, 5, 220, system_font, "Zone: {}".format(current_zone))
         pygame_misc.print_str(screen, 5, 350, system_font, str(pos))
 
-        w, h = pygame.display.get_surface().get_size()
-        ratio = (next_income - pos) / (next_income - score_data.score[lyrincs_index][0])
-        pygame.draw.rect(screen, (255, 0, 0), (0, 0, math.floor(ratio * w), 6))
-        pygame.draw.rect(screen, (255, 0, 0), (0, 6, math.floor((count if count > 0 else 1) / ((count - missed) if missed > 0 else 1)) * w, 6))
-
+        pygame.draw.rect(screen, missrate_col, (0, 85, math.floor(missrate * w), 2))
+        pygame.draw.rect(screen, latest_missrate_col, (0, 12, math.floor(latest_missrate * w), 2))
         if completed:
-            pygame_misc.print_str(screen, 5, 220, full_font, "* Feeling goodness *", (255, 255, 120))
-
+            pygame_misc.print_str(screen, 5, 280, full_font, "WA" if sent_miss != 0 else "AC", (255, 255, 120))
 
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -281,16 +297,24 @@ def main():
                         target_kana = Romautil.get_not_halfway_hr(target_kana, target_roma)
                         count += 1
                         point += ONE_CHAR_POINT
+                        sent_count += 1
+
                     else:
                         missed += 1
                         sent_miss += 1
                         point += MISS_POINT
+                        missrate = sent_miss / ((sent_miss + sent_count) if sent_miss + sent_count > 0 else 1)
+                        print(missrate)
+
 
                     # Completed!
                     if len(target_roma) == 0:
                         point += CLEAR_POINT
                         if sent_miss == 0:
                             point += PERFECT_POINT
+                            missrate_col = (255, 255, 0)
+                        else:
+                            missrate_col = (0, 255, 0)
                         completed = True
 
 
