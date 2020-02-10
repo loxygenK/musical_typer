@@ -8,6 +8,8 @@ import pygame_misc
 import re
 
 pygame.init()
+pygame.mixer.pre_init(44100, 16, 2, 4096)
+pygame.mixer.init()
 
 class Score:
     LOG_ERROR = 1
@@ -92,6 +94,10 @@ def read_score(file_name):
             score.re_initialize_except_log()
             break
 
+        if line.startswith(">>"):
+            score.score.append([60 * current_minute + current_seconds, line[2:], ""])
+            continue
+
         # Minute
         if line.startswith("|"):
             line = line[1:]
@@ -144,7 +150,6 @@ def read_score(file_name):
                     del zone_data[zone_name]
                     continue
 
-
         # Phonenics
         if line.startswith(":"):
             line = line[1:]
@@ -156,6 +161,11 @@ def read_score(file_name):
         if len(song) != 0:
             score.log_warn(line, "Song string overwrited: {} into {}.".format(song, line))
         song = line
+
+    if "song_data" not in score.properties.keys():
+        score.log_error("[Loading song failed]", "No song specified!")
+    else:
+        pygame.mixer.music.load(score.properties["song_data"])
 
     return score
 
@@ -179,6 +189,9 @@ def main():
     missed = 0
 
     mainloop_continues = True
+    pygame.mixer.music.play(1)
+    pygame.mixer.music.get_pos()
+
     for score in score_data.score:
 
         full = score[1]
@@ -196,6 +209,7 @@ def main():
             pygame_misc.print_str(screen, 5, 80, alphabet_font, target_roma)
             pygame_misc.print_str(screen, 5, 130, system_font, "Typed: {}".format(count))
             pygame_misc.print_str(screen, 5, 150, system_font, "Miss: {}".format(missed))
+            pygame_misc.print_str(screen, 5, 350, system_font, str(pygame.mixer.music.get_pos()))
 
             for event in pygame.event.get():
                 if event.type == QUIT:
@@ -226,6 +240,7 @@ def main():
             # 60fps
             pygame.time.wait(1000 // 60)
             pygame.display.update()
+
 
     pygame.quit()
     sys.exit()
