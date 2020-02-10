@@ -192,54 +192,66 @@ def main():
     pygame.mixer.music.play(1)
     pygame.mixer.music.get_pos()
 
-    for score in score_data.score:
+    lyrincs_index = -1
+    target_kana = ""
+    target_roma = ""
+    full = ""
+    while mainloop_continues:
 
-        full = score[1]
-        target_kana = score[2]
-        target_roma = Romautil.hira2roma(target_kana)
+        pos = pygame.mixer.music.get_pos() / 1000
+
+        # If new lyncs coming
+        if score_data.score[lyrincs_index + 1][0] <= pos:
+            lyrincs_index += 1
+            print(str(lyrincs_index) + " (" + str(score_data.score[lyrincs_index]) + ")")
+            full = score_data.score[lyrincs_index][1]
+            target_kana = score_data.score[lyrincs_index][2]
+            target_roma = Romautil.hira2roma(target_kana)
 
         sentence_continues = True
 
-        while mainloop_continues and sentence_continues:
+        screen.fill((0, 0, 0))
 
-            screen.fill((0, 0, 0))
+        pygame_misc.print_str(screen, 5, 0, nihongo_font, target_kana)
+        pygame_misc.print_str(screen, 5, 55, full_font, full, (192, 192, 192))
+        pygame_misc.print_str(screen, 5, 80, alphabet_font, target_roma)
+        pygame_misc.print_str(screen, 5, 130, system_font, "Typed: {}".format(count))
+        pygame_misc.print_str(screen, 5, 150, system_font, "Miss: {}".format(missed))
+        pygame_misc.print_str(screen, 5, 350, system_font, str(pos))
 
-            pygame_misc.print_str(screen, 5, 0, nihongo_font, target_kana)
-            pygame_misc.print_str(screen, 5, 55, full_font, full, (192, 192, 192))
-            pygame_misc.print_str(screen, 5, 80, alphabet_font, target_roma)
-            pygame_misc.print_str(screen, 5, 130, system_font, "Typed: {}".format(count))
-            pygame_misc.print_str(screen, 5, 150, system_font, "Miss: {}".format(missed))
-            pygame_misc.print_str(screen, 5, 350, system_font, str(pygame.mixer.music.get_pos()))
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                mainloop_continues = False
+                break
+            if event.type == KEYDOWN:
 
-            for event in pygame.event.get():
-                if event.type == QUIT:
-                    mainloop_continues = False
-                    break
-                if event.type == KEYDOWN:
+                # Completed already, or no phonuciation provided
+                if len(target_roma) == 0:
+                    continue
 
-                    # filter event -- if alphabet, number, or "-" key pressed
-                    if Romautil.is_readable_key_pressed(event.key):
+                # filter event -- if alphabet, number, or "-" key pressed
+                if Romautil.is_readable_key_pressed(event.key):
+                    # if correct key was pushed
+                    if target_roma[0] == chr(event.key):
+                        target_roma = target_roma[1:]
+                        target_kana = Romautil.get_not_halfway_hr(target_kana, target_roma)
+                        count += 1
+                    else:
+                        missed += 1
 
-                        # if correct key was pushed
-                        if target_roma[0] == chr(event.key):
-                            target_roma = target_roma[1:]
-                            target_kana = Romautil.get_not_halfway_hr(target_kana, target_roma)
-                            count += 1
-                        else:
-                            missed += 1
-
-                        # Completed!
-                        if len(target_roma) == 0:
-                            sentence_continues = False
-                            break
-
-                    if event.key == K_ESCAPE:
-                        mainloop_continues = False
+                    # Completed!
+                    if len(target_roma) == 0:
+                        print("Complete :)")
                         break
 
-            # 60fps
-            pygame.time.wait(1000 // 60)
-            pygame.display.update()
+
+                if event.key == K_ESCAPE:
+                    mainloop_continues = False
+                    break
+
+        # 60fps
+        pygame.time.wait(1000 // 60)
+        pygame.display.update()
 
 
     pygame.quit()
