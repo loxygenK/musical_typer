@@ -1,3 +1,5 @@
+import math
+
 import pygame
 import sys
 from pygame.locals import *
@@ -6,6 +8,12 @@ import Romautil
 import pygame_misc
 
 import re
+
+ONE_CHAR_POINT = 10
+PERFECT_POINT = 100
+CLEAR_POINT = 50
+MISS_POINT = -30
+COULDNT_TYPE_POINT = -2
 
 pygame.init()
 pygame.mixer.pre_init(44100, 16, 2, 4096)
@@ -56,11 +64,14 @@ def read_score(file_name):
 
     score_data = []
     zone_data = {}
+    next_current_minute = 0
     current_minute = 0
     current_seconds = 0.0
 
     song = ""
     phon = ""
+
+    point = 0
 
     is_in_song = False
     for line in lines:
@@ -85,14 +96,21 @@ def read_score(file_name):
             command = rect_blk_match[1]
             if command == "start":
                 is_in_song = True
+                continue
             elif command == "end":
                 is_in_song = False
-            continue
+                continue
 
         if not is_in_song:
             score.log_error(line, "Unknown text outside song section!")
             score.re_initialize_except_log()
             break
+
+        if rect_blk_match is not None:
+            command = rect_blk_match[1]
+            if command == "break":
+                score.score.append([60 * current_minute + current_seconds, "", ""])
+                continue
 
         if line.startswith(">>"):
             score.score.append([60 * current_minute + current_seconds, line[2:], ""])
@@ -101,7 +119,7 @@ def read_score(file_name):
         # Minute
         if line.startswith("|"):
             line = line[1:]
-            current_minute = int(line)
+            next_current_minute = int(line)
             continue
 
         # Seconds
@@ -117,6 +135,7 @@ def read_score(file_name):
                 song = ""
                 phon = ""
             current_seconds = float(line)
+            current_minute = next_current_minute
             continue
 
         if line.startswith("@"):
@@ -196,17 +215,31 @@ def main():
     target_kana = ""
     target_roma = ""
     full = ""
+
+    point = 0
+    sent_miss = 0
+    completed = False
+
+    next_income = score_data.score[0][0]
+
     while mainloop_continues:
 
         pos = pygame.mixer.music.get_pos() / 1000
 
         # If new lyncs coming
         if score_data.score[lyrincs_index + 1][0] <= pos:
+
+            point += COULDNT_TYPE_POINT * len(target_roma)
+
             lyrincs_index += 1
             print(str(lyrincs_index) + " (" + str(score_data.score[lyrincs_index]) + ")")
+
+            next_income = score_data.score[lyrincs_index + 1][0]
             full = score_data.score[lyrincs_index][1]
             target_kana = score_data.score[lyrincs_index][2]
             target_roma = Romautil.hira2roma(target_kana)
+            sent_miss = 0
+            completed = False
 
         sentence_continues = True
 
@@ -217,7 +250,18 @@ def main():
         pygame_misc.print_str(screen, 5, 80, alphabet_font, target_roma)
         pygame_misc.print_str(screen, 5, 130, system_font, "Typed: {}".format(count))
         pygame_misc.print_str(screen, 5, 150, system_font, "Miss: {}".format(missed))
+        pygame_misc.print_str(screen, 5, 170, system_font, "Sent: {}".format(sent_miss))
+        pygame_misc.print_str(screen, 5, 190, full_font, "Score: {}".format(point))
         pygame_misc.print_str(screen, 5, 350, system_font, str(pos))
+
+        w, h = pygame.display.get_surface().get_size()
+        ratio = (next_income - pos) / (next_income - score_data.score[lyrincs_index][0])
+        pygame.draw.rect(screen, (255, 0, 0), (0, 0, math.floor(ratio * w), 6))
+        pygame.draw.rect(screen, (255, 0, 0), (0, 6, math.floor((count if count > 0 else 1) / ((count - missed) if missed > 0 else 1)) * w, 6))
+
+        if completed:
+            pygame_misc.print_str(screen, 5, 220, full_font, "* Feeling goodness *", (255, 255, 120))
+
 
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -236,13 +280,18 @@ def main():
                         target_roma = target_roma[1:]
                         target_kana = Romautil.get_not_halfway_hr(target_kana, target_roma)
                         count += 1
+                        point += ONE_CHAR_POINT
                     else:
                         missed += 1
+                        sent_miss += 1
+                        point += MISS_POINT
 
                     # Completed!
                     if len(target_roma) == 0:
-                        print("Complete :)")
-                        break
+                        point += CLEAR_POINT
+                        if sent_miss == 0:
+                            point += PERFECT_POINT
+                        completed = True
 
 
                 if event.key == K_ESCAPE:
