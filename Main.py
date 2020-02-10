@@ -98,19 +98,19 @@ def read_score(file_name):
                     score.properties = {}
                     score.score = []
                     score.zone = []
-                    break
                 else:
                     set_val_to_dictionary(zone_data, zone_name, 60 * current_minute + current_seconds)
+                break
             elif flag == "end":
                 if zone_name not in zone_data.keys():
                     score.log.append([Score.LOG_ERROR, [line, "Suddenly unknown zone appeared!"]])
                     score.properties = {}
                     score.score = []
                     score.zone = []
-                    break
                 else:
                     score.zone.append([zone_data[zone_name], 60 * current_minute + current_seconds, zone_name])
                     del zone_data[zone_name]
+                break
 
         set_val_to_dictionary(score.score, 60 * current_minute + current_seconds, line)
 
