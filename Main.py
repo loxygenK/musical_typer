@@ -20,6 +20,20 @@ class Score:
         self.zone = []
         self.section = {}
 
+    def log_error(self, line, text, init=True):
+        self.log.append([Score.LOG_ERROR, [line, text]])
+        if init: self.re_initialize_except_log()
+
+    def log_warn(self, line, text):
+        self.log.append([Score.LOG_WARN, [line, text]])
+
+    def re_initialize_except_log(self):
+        self.properties = {}
+        self.score = []
+        self.zone = []
+        self.section = {}
+
+
 
 def set_val_to_dictionary(dict, key, value):
     if key in dict.keys():
@@ -74,10 +88,8 @@ def read_score(file_name):
             continue
 
         if not is_in_song:
-            score.log.append([Score.LOG_ERROR, [line, "Unknown text outside song section!"]])
-            score.properties = {}
-            score.score = []
-            score.zone = []
+            score.log_error(line, "Unknown text outside song section!")
+            score.re_initialize_except_log()
             break
 
         # Minute
@@ -93,9 +105,7 @@ def read_score(file_name):
 
             if len(song) != 0:
                 if len(phon) == 0:
-                    score.log.append([Score.LOG_ERROR, [line, "No pronunciation data!"]])
-                    score.properties = {}
-                    score.score = []
+                    score.log_error(line, "No pronunciation data!")
                     break
                 score.score.append([60 * current_minute + current_seconds, song, phon])
                 song = ""
@@ -106,10 +116,7 @@ def read_score(file_name):
         if line.startswith("@"):
             line = line[1:]
             if line in score.section:
-                score.log.append([Score.LOG_ERROR, [line, "Duplicated Section Name!"]])
-                score.properties = {}
-                score.score = []
-                score.zone = []
+                score.log_error(line, "Duplicated Section Name!")
                 break
             else:
                 set_val_to_dictionary(score.section, line, 60 * current_minute + current_seconds)
@@ -123,20 +130,14 @@ def read_score(file_name):
 
             if flag == "start":
                 if zone_name in zone_data.keys():
-                    score.log.append([Score.LOG_ERROR, [line, "Nest of the same name zone!"]])
-                    score.properties = {}
-                    score.score = []
-                    score.zone = []
+                    score.log_error(line, "Nest of the same name zone!")
                     break
                 else:
                     set_val_to_dictionary(zone_data, zone_name, 60 * current_minute + current_seconds)
                     continue
             elif flag == "end":
                 if zone_name not in zone_data.keys():
-                    score.log.append([Score.LOG_ERROR, [line, "Suddenly unknown zone appeared!"]])
-                    score.properties = {}
-                    score.score = []
-                    score.zone = []
+                    score.log_error(line, "Suddenly unknown zone appeared!")
                     break
                 else:
                     score.zone.append([zone_data[zone_name], 60 * current_minute + current_seconds, zone_name])
@@ -148,12 +149,12 @@ def read_score(file_name):
         if line.startswith(":"):
             line = line[1:]
             if len(phon) != 0:
-                score.log.append([Score.LOG_WARN, [line, "Pronunciation string overwrited: {} into {}.".format(song, line)]])
+                score.log_warn(line, "Pronunciation string overwrited: {} into {}.".format(song, line))
             phon = line
             continue
 
         if len(song) != 0:
-            score.log.append([Score.LOG_WARN, [line, "Song string overwrited: {} into {}.".format(song, line)]])
+            score.log_warn(line, "Song string overwrited: {} into {}.".format(song, line))
         song = line
 
     return score
