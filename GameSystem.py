@@ -240,3 +240,9 @@ class GameJudgementInfo:
         print(code, end="")
 
         return self.target_roma[0] == code
+
+
+class SEControl:
+    success = pygame.mixer.Sound("ses/success.wav")
+    failed = pygame.mixer.Sound("ses/failed.wav")
+    unneccesary = pygame.mixer.Sound("ses/unneccesary.wav")

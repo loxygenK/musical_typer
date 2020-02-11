@@ -210,14 +210,17 @@ def main():
 
                 # Completed already, or no phonuciation provided
                 if judge_info.completed:
+                    SEControl.unneccesary.play()
                     continue
 
                 # filter event -- if alphabet, number, or "-" key pressed
                 if Romautil.is_readable_key_pressed(event.key):
                     # if correct key was pushed
                     if judge_info.is_expected_key(chr(event.key)):
+                        SEControl.success.play()
                         judge_info.count_success()
                     else:
+                        SEControl.failed.play()
                         judge_info.count_failure()
 
                 if event.key == K_ESCAPE:
