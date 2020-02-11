@@ -252,7 +252,7 @@ def main():
         if sct_idx:
 
             # If player completed this section, let's cerebrate it
-            if judge_info.section_miss == 0:
+            if judge_info.section_miss == 0 and judge_info.section_count != 0:
                 ui.add_draw_method(60, DrawMethodTemplates.slide_fadeout_text, ["Section AC!a", (255, 127, 0), ui.system_font, 25])
 
             # And erase section result data
