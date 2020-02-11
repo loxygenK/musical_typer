@@ -1,17 +1,18 @@
 import math
-
 import pygame
+pygame.mixer.pre_init(44100, 16, 2, 1024)
+pygame.mixer.init()
+pygame.init()
+
 import sys
 from pygame.locals import *
 
+import DrawMethodTemplates
 import Romautil
 import pygame_misc
 
 import re
 
-pygame.mixer.pre_init(44100, 16, 2, 1024)
-pygame.mixer.init()
-pygame.init()
 
 
 from GameSystem import *
@@ -26,7 +27,7 @@ class Score:
         self.log = []
         self.score = []
         self.zone = []
-        self.section = {}
+        self.section = []
 
     def log_error(self, line, text, init=True):
         self.log.append([Score.LOG_ERROR, [line, text]])
@@ -39,7 +40,7 @@ class Score:
         self.properties = {}
         self.score = []
         self.zone = []
-        self.section = {}
+        self.section = []
 
 
 
@@ -96,6 +97,7 @@ def read_score(file_name):
                 is_in_song = True
                 continue
             elif command == "end":
+                score.score.append([current_time, "end", ""])
                 is_in_song = False
                 continue
 
@@ -139,11 +141,7 @@ def read_score(file_name):
 
         if line.startswith("@"):
             line = line[1:]
-            if line in score.section:
-                score.log_error(line, "Duplicated Section Name!")
-                break
-            else:
-                set_val_to_dictionary(score.section, current_time, line)
+            score.section.append([current_time, line])
 
             continue
 
@@ -193,14 +191,30 @@ def main():
     judge_info = GameJudgementInfo()
     ui = Screen()
 
-    progress.lyrincs_index = -1
+    game_finished_reason = ""
 
+    ui.add_draw_method(60, DrawMethodTemplates.slide_fadeout_text, ["Song start!", (255, 127, 0), ui.system_font, 25])
     mainloop_continues = True
-    while mainloop_continues:
+    song_finished = False
 
-        # --------------
-        #     Events
-        # --------------
+    pygame.mixer.music.set_volume(0.5)
+
+    while mainloop_continues and pygame.mixer.music.get_pos() > 0:
+
+        # -----------------------
+        #     Pre-Calculation
+        # -----------------------
+
+        # get some values
+        pos = pygame.mixer.music.get_pos() / 1000
+
+        current_lyrincs, lyx_idx = progress.get_current_lyrincs(pos)
+        current_zone,    zne_idx = progress.get_current_zone(pos)
+        current_section, sct_idx = progress.get_current_section(pos)
+
+        # ------------------------
+        #     Events / Judging
+        # ------------------------
 
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -210,6 +224,7 @@ def main():
 
                 # Completed already, or no phonuciation provided
                 if judge_info.completed:
+                    SEControl.unneccesary.play()
                     continue
 
                 # filter event -- if alphabet, number, or "-" key pressed
@@ -217,8 +232,18 @@ def main():
                     # if correct key was pushed
                     if judge_info.is_expected_key(chr(event.key)):
                         judge_info.count_success()
+                        # Add some special score
+                        if current_zone == "tech-zone":
+                            judge_info.point += judge_info.SPECIAL_POINT
+                            SEControl.special_success.play()
+                        else:
+                            SEControl.success.play()
                     else:
+                        SEControl.failed.play()
                         judge_info.count_failure()
+                        # blink screen
+                        ui.add_draw_method(15, DrawMethodTemplates.blink_screen, [(127, 0, 0)])
+
 
                 if event.key == K_ESCAPE:
                     mainloop_continues = False
@@ -228,44 +253,94 @@ def main():
         #     Calculation
         # --------------------
 
-        pos = pygame.mixer.music.get_pos() / 1000
+        # If lyrics changed, re-initialize some things, such as judge_info
+        if lyx_idx or (current_lyrincs is None and not song_finished):
 
-        current_lyrincs, index_changed = progress.get_current_lyrincs(pos)
-        # If new lyncs comingWDdd
-        if index_changed:
-
+            # Before it let's add score
             judge_info.point += GameJudgementInfo.COULDNT_TYPE_POINT * len(judge_info.target_roma)
 
+            # And erase something
             judge_info.reset_sentence_score()
             judge_info.set_current_lyrinc(score_data.score[progress.lyrincs_index][1], score_data.score[progress.lyrincs_index][2])
 
+            # did song finish?
+            if current_lyrincs is None and not song_finished:
+                judge_info.set_current_lyrinc("", "")
+                song_finished = True
+                ui.add_draw_method(60, DrawMethodTemplates.slide_fadeout_text, ["Song Finished!", (255, 127, 0), ui.system_font, 25])
 
-            print()
 
+        # If section changed, there's some special calculation...
+        if sct_idx:
+
+            # If player completed this section, let's cerebrate it and add score
+            if judge_info.section_miss == 0 and judge_info.section_count != 0:
+                ui.add_draw_method(60, DrawMethodTemplates.slide_fadeout_text, ["Section AC!a", (255, 127, 0), ui.system_font, 25])
+                judge_info.point += judge_info.SECTION_PERFECT_POINT
+
+            # And erase section result data
+            judge_info.reset_section_score()
+
+            # cool blink
+            ui.add_draw_method(15, DrawMethodTemplates.blink_screen, [(0, 0, 64)])
+
+        if zne_idx:
+            ui.add_draw_method(15, DrawMethodTemplates.blink_screen, [(64, 64, 0)])
+
+        if judge_info.point < -300:
+            game_finished_reason = "gameover"
+            break
+
+
+        # ----------------
+        #     Drawing
+        # ----------------
+
+        # reset screen
         ui.screen.fill((0, 0, 0))
+        w, h = ui.screen_size
 
-        w, h = pygame.display.get_surface().get_size()
+        # update drawing method
+        ui.update_draw_method()
 
+        # Sentence remain time guage
         pygame.draw.rect(ui.screen, (128, 0, 0), (0, 0, math.floor(progress.get_time_remain_ratio(pos) * w), 120))
 
+        # Debug output
         ui.print_str(5, 0,   ui.nihongo_font,   judge_info.target_kana)
         ui.print_str(5, 55,  ui.full_font,      judge_info.full, (192, 192, 192))
         ui.print_str(5, 80,  ui.alphabet_font,  judge_info.target_roma)
-        ui.print_str(5, 130, ui.system_font,    "Typed: {}".format(judge_info.count))
-        ui.print_str(5, 150, ui.system_font,    "Miss: {}".format(judge_info.missed))
-        ui.print_str(5, 170, ui.system_font,    "Sent: {}".format(judge_info.sent_miss))
+        ui.print_str(5, 130, ui.system_font,    "Full:     {} / {} ({})".format(judge_info.count, judge_info.missed, judge_info.typed))
+        ui.print_str(5, 150, ui.system_font,    "Sentence: {} / {} ({})".format(judge_info.sent_count, judge_info.sent_miss, judge_info.sent_typed))
+        ui.print_str(5, 170, ui.system_font,    "Section : {} / {} ({})".format(judge_info.section_count, judge_info.section_miss, judge_info.section_typed))
         ui.print_str(5, 190, ui.full_font,      "Score: {}".format(judge_info.point))
-        ui.print_str(5, 220, ui.system_font,    "Zone: {}".format(progress.get_current_zone(pos)))
+        ui.print_str(5, 240, ui.system_font,    "Zone: {}".format(current_zone))
+        ui.print_str(5, 260, ui.system_font,    "Section: {}".format(current_section))
 
         ui.print_str(5, 350, ui.system_font,    str(pos))
 
+        # Missrate Info
         pygame.draw.rect(ui.screen, (255, 0, 0), (0, 85, math.floor(judge_info.get_sentence_missrate() * w), 2))
+
+        # Does player completed?
         if judge_info.completed and judge_info.sent_count > 0:
+            # Give information
             ui.print_str(5, 280, ui.full_font, "WA" if judge_info.sent_miss != 0 else "AC", (255, 255, 120))
 
         # 60fps
         pygame.time.wait(1000 // 60)
         pygame.display.update()
+
+    if game_finished_reason == "gameover":
+        ui.add_draw_method(300, DrawMethodTemplates.blink_screen, [(192, 0, 0)])
+        ui.add_draw_method(300, DrawMethodTemplates.slide_fadeout_text, ["Too many mistake!", (255, 127, 0), ui.nihongo_font, -25])
+        SEControl.gameover.play()
+        for _ in range(300):
+            pygame.mixer.music.fadeout(1000)
+            ui.update_draw_method()
+            pygame.time.wait(1000 // 60)
+            pygame.display.update()
+
 
 
     pygame.quit()
