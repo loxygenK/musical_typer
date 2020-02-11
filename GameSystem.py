@@ -239,6 +239,10 @@ class GameJudgementInfo:
         self.section_miss = 0
         self.section_count = 0
 
+        # --- Result log
+        self.sentence_log = []
+        self.section_log = []
+
         self.point = 0
 
         self.completed = True
@@ -256,35 +260,33 @@ class GameJudgementInfo:
     def section_typed(self):
         return self.section_count + self.section_miss
 
-    def get_sentence_missrate(self):
+    def calc_missrate(self, count, miss):
+        trying_sumup = count + miss
+
+        # To prevent ZeroDivision
+        if trying_sumup == 0:
+            trying_sumup = 1
+
+        return count / trying_sumup
+
+    def get_sentence_missrate(self, count=-1, miss=-1):
         """
         歌詞ごとの成功比率を求める。
         成功回数+失敗回数が0の場合は、成功回数を返す。(つまり0になる)
         :return: 成功比率（成功回数/(成功回数+失敗回数)）
         """
 
-        trying_sumup = self.sent_miss + self.sent_count
+        return self.calc_missrate(self.sent_count, self.sent_miss)
 
-        # To prevent ZeroDivision
-        if trying_sumup == 0:
-            trying_sumup = 1
 
-        return self.sent_count / trying_sumup
-
-    def get_sentence_missrate(self):
+    def get_section_missrate(self, count=-1, miss=-1):
         """
         セクションごとの成功比率を求める。
         成功回数+失敗回数が0の場合は、成功回数を返す。(つまり0になる)
         :return: 成功比率（成功回数/(成功回数+失敗回数)）
         """
 
-        trying_sumup = self.section_miss + self.section_count
-
-        # To prevent ZeroDivision
-        if trying_sumup == 0:
-            trying_sumup = 1
-
-        return self.section_count / trying_sumup
+        return self.calc_missrate(self.section_count, self.section_miss)
 
     def set_current_lyrinc(self, full, kana):
         """
@@ -301,6 +303,22 @@ class GameJudgementInfo:
 
         if len(self.target_roma) == 0:
             self.completed = True
+
+    def record_sentence_score(self):
+        """
+        歌詞ごとの進捗情報を記録する。
+
+        :return: なし
+        """
+        self.sentence_log.append([self.sent_count, self.sent_miss, self.completed])
+
+    def record_section_score(self):
+        """
+        セクションごとの進捗情報を記録する
+
+        :return: なし
+        """
+        self.section_log.append([self.section_count, self.section_miss])
 
     def reset_sentence_score(self):
         """

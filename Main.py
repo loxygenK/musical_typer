@@ -8,13 +8,7 @@ import sys
 from pygame.locals import *
 
 import DrawMethodTemplates
-import Romautil
-import pygame_misc
-
 import re
-
-
-
 from GameSystem import *
 
 
@@ -41,7 +35,6 @@ class Score:
         self.score = []
         self.zone = []
         self.section = []
-
 
 
 def set_val_to_dictionary(dict, key, value):
@@ -177,8 +170,6 @@ def read_score(file_name):
     return score
 
 
-
-
 def main():
 
     score_data = read_score("test_music_text.tsc")
@@ -253,11 +244,16 @@ def main():
         #     Calculation
         # --------------------
 
+        # ===== Segment Change =====
+
         # If lyrics changed, re-initialize some things, such as judge_info
         if lyx_idx or (current_lyrincs is None and not song_finished):
 
             # Before it let's add score
             judge_info.point += GameJudgementInfo.COULDNT_TYPE_POINT * len(judge_info.target_roma)
+
+            # Then record
+            judge_info.record_sentence_score()
 
             # And erase something
             judge_info.reset_sentence_score()
@@ -277,6 +273,9 @@ def main():
             if judge_info.section_miss == 0 and judge_info.section_count != 0:
                 ui.add_draw_method(60, DrawMethodTemplates.slide_fadeout_text, ["Section AC!a", (255, 127, 0), ui.system_font, 25])
                 judge_info.point += judge_info.SECTION_PERFECT_POINT
+
+            # Then record
+            judge_info.record_section_score()
 
             # And erase section result data
             judge_info.reset_section_score()
@@ -321,11 +320,21 @@ def main():
 
         # Missrate Info
         pygame.draw.rect(ui.screen, (255, 0, 0), (0, 85, math.floor(judge_info.get_sentence_missrate() * w), 2))
+        pygame.draw.rect(ui.screen, (255, 0, 0), (0, 87, math.floor(judge_info.get_section_missrate() * w), 2))
 
         # Does player completed?
         if judge_info.completed and judge_info.sent_count > 0:
             # Give information
             ui.print_str(5, 280, ui.full_font, "WA" if judge_info.sent_miss != 0 else "AC", (255, 255, 120))
+
+        for i in range(len(judge_info.sentence_log)):
+            missrate = judge_info.calc_missrate(*judge_info.sentence_log[i][:-1])
+            pygame.draw.rect(ui.screen, (255, 0, 0), (0, 400 + 2 * i, math.floor(missrate * w // 2), 2))
+
+        for i in range(len(judge_info.section_log)):
+            missrate = judge_info.calc_missrate(*judge_info.section_log[i])
+            pygame.draw.rect(ui.screen, (0, 0, 255), (w // 2, 400 + 2 * i, math.floor(missrate * w // 2), 2))
+
 
         # 60fps
         pygame.time.wait(1000 // 60)
