@@ -1,6 +1,11 @@
 # Musical Typer
 歌詞を全力でタイプするゲーム<br>
-リアルタイムでなんとかして歌詞を打ちましょう
+リアルタイムでなんとかして歌詞を打ちましょう<br>
+## warning
+<span style="color: red; ">**曲の音源データと譜面データはないです！！！！！！！！！！！！！！！！！！！！！１１１１１**</span><br>
+テスト用音源がらいくあらいとなので上げたらヤバい気がします<br>
+そのうち音源がリポに上がるかもしれません
+
 ## some goodness font
 http://mplus-fonts.osdn.jp/about.html にある「M+ Fonts」の中の「M+ 1mn light」を使用しています。みやすくてすき
 
