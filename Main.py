@@ -180,6 +180,7 @@ def main():
 
     progress = GameProgressInfo(score_data)
     judge_info = GameJudgementInfo()
+    key_speeder = KeySpeedCalculator()
     ui = Screen()
 
     game_finished_reason = ""
@@ -222,6 +223,7 @@ def main():
                 if Romautil.is_readable_key_pressed(event.key):
                     # if correct key was pushed
                     if judge_info.is_expected_key(chr(event.key)):
+                        key_speeder.ticked(pos)
                         judge_info.count_success()
                         # Add some special score
                         if current_zone == "tech-zone":
@@ -258,6 +260,9 @@ def main():
             # And erase something
             judge_info.reset_sentence_score()
             judge_info.set_current_lyrinc(score_data.score[progress.lyrincs_index][1], score_data.score[progress.lyrincs_index][2])
+
+            # Reset the time standard
+            key_speeder.set_prev_pos(pos)
 
             # did song finish?
             if current_lyrincs is None and not song_finished:
@@ -315,6 +320,7 @@ def main():
         ui.print_str(5, 190, ui.full_font,      "Score: {}".format(judge_info.point))
         ui.print_str(5, 240, ui.system_font,    "Zone: {}".format(current_zone))
         ui.print_str(5, 260, ui.system_font,    "Section: {}".format(current_section))
+        ui.print_str(5, 280, ui.system_font,    "{} Key/s".format(key_speeder.get_key_per_second()))
 
         ui.print_str(5, 350, ui.system_font,    str(pos))
 
