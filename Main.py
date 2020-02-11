@@ -268,6 +268,8 @@ def main():
             # And erase section result data
             judge_info.reset_section_score()
 
+            # cool blink
+            ui.add_draw_method(15, DrawMethodTemplates.blink_screen, [(0, 0, 64)])
 
         if zne_idx:
             ui.add_draw_method(15, DrawMethodTemplates.blink_screen, [(64, 64, 0)])
