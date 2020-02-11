@@ -396,3 +396,37 @@ class SEControl:
     failed = pygame.mixer.Sound("ses/failed.wav")
     unneccesary = pygame.mixer.Sound("ses/unneccesary.wav")
     gameover = pygame.mixer.Sound("ses/gameover.wav")
+
+class KeySpeedCalculator:
+    def __init__(self, length=30):
+        self.key_log = []
+        self.prev_time = 0
+        self.length = length
+
+    def ticked(self, pos):
+
+        if self.prev_time == 0:
+            self.prev_time = pos
+            return
+
+        self.key_log.append(pos - self.prev_time)
+        self.prev_time = pos
+
+        if len(self.key_log) > self.length:
+            del self.key_log[0]
+
+    def set_prev_pos(self, pos):
+        self.prev_time = pos
+
+
+    def get_average(self):
+        if len(self.key_log) == 0:
+            return 0
+
+        return sum(self.key_log) / len(self.key_log)
+
+    def get_key_per_second(self):
+        if len(self.key_log) == 0:
+            return 0
+
+        return 1 / self.get_average()
