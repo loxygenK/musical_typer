@@ -195,6 +195,17 @@ def main():
     mainloop_continues = True
     while mainloop_continues:
 
+        # -----------------------
+        #     Pre-Calculation
+        # -----------------------
+
+        # get some values
+        pos = pygame.mixer.music.get_pos() / 1000
+
+        current_lyrincs, lyx_idx = progress.get_current_lyrincs(pos)
+        current_zone,    zne_idx = progress.get_current_zone(pos)
+        current_section, sct_idx = progress.get_current_section(pos)
+
         # ------------------------
         #     Events / Judging
         # ------------------------
@@ -235,13 +246,6 @@ def main():
         # --------------------
         #     Calculation
         # --------------------
-
-        # get some values
-        pos = pygame.mixer.music.get_pos() / 1000
-
-        current_lyrincs, lyx_idx = progress.get_current_lyrincs(pos)
-        current_zone,    zne_idx = progress.get_current_zone(pos)
-        current_section, sct_idx = progress.get_current_section(pos)
 
         # If lyrics changed, re-initialize some things, such as judge_info
         if lyx_idx:
