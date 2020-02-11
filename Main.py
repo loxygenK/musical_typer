@@ -251,9 +251,10 @@ def main():
         # If section changed, there's some special calculation...
         if sct_idx:
 
-            # If player completed this section, let's cerebrate it
+            # If player completed this section, let's cerebrate it and add score
             if judge_info.section_miss == 0 and judge_info.section_count != 0:
                 ui.add_draw_method(60, DrawMethodTemplates.slide_fadeout_text, ["Section AC!a", (255, 127, 0), ui.system_font, 25])
+                judge_info.point += judge_info.SECTION_PERFECT_POINT
 
             # And erase section result data
             judge_info.reset_section_score()
