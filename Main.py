@@ -260,6 +260,9 @@ def main():
             judge_info.reset_section_score()
 
 
+        if zne_idx:
+            ui.add_draw_method(15, DrawMethodTemplates.blink_screen, [(64, 64, 0)])
+
 
         # ----------------
         #     Drawing

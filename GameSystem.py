@@ -123,6 +123,10 @@ class GameProgressInfo:
                         self.zone_index = i - 1
                     return self.score.zone[i - 1][1], is_lidx_changes
                 else:
+                    if self.zone_index != 0:
+                        self.zone_index = 0
+                        return None, True
+
                     return None, False
 
         return None, False
