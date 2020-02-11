@@ -15,10 +15,27 @@ class Screen:
 
     def __init__(self):
         self.screen = pygame.display.set_mode((600, 480))
+        self.drawer = []
         pygame.display.set_caption("Musical Typer")
+
+    @property
+    def screen_size(self):
+        return pygame.display.get_surface().get_size()
 
     def print_str(self, x, y, font, text, color=(255, 255, 255)):
         pygame_misc.print_str(self.screen, x, y, font, text, color)
+
+    def add_draw_method(self, living_frame, draw_func, argument=None):
+        self.drawer.append([living_frame, 0, draw_func, argument])
+
+    def update_draw_method(self):
+        for i in range(len(self.drawer)):
+            self.drawer[i][2](self.drawer[i][1], self.drawer[i][0], self, self.drawer[i][3])
+
+            self.drawer[i][1] += 1
+
+        self.drawer = list(filter(lambda x: x[1] < x[0], self.drawer))
+
 
 
 class GameProgressInfo:
@@ -28,11 +45,16 @@ class GameProgressInfo:
 
     def __init__(self, score):
 
-        self.lyrincs_index = -1
+        self.lyrincs_index =  0
         """今いる歌詞のインデックス。 get_current_lyrincsメソッドにより更新される"""
 
-        self.zone_index = -1
+        self.zone_index = 0
         """今いるゾーンのインデックス。 get_zone_lyrincsメソッドにより更新される"""
+
+        self.section_index = 0
+        """今いるセクションのインデックス。 get_section_lyrincsメソッドにより更新される"""
+
+
         self.score = score
 
     def next_lyrincs_incoming(self, pos):
@@ -62,8 +84,12 @@ class GameProgressInfo:
         """
 
         # TODO: 処理を軽くする(キャッシュとか使って)
-        for i in range(len(self.score.score)):
 
+        if self.score.score[self.lyrincs_index + 1][0] > pos:
+            return self.score.score[self.lyrincs_index], False
+
+        for i in range(self.lyrincs_index, len(self.score.score)):
+            if i < 0: continue
 
             if self.score.score[i][0] >= pos:
 
@@ -82,15 +108,47 @@ class GameProgressInfo:
         :return: ゾーン名。ゾーンに属していない場合はNoneを返す
         """
         # TODO: 処理を軽くする(キャッシュとか使って)
-        for i in range(len(self.score.zone)):
+
+        if self.score.zone[self.zone_index + 1][0] > pos:
+            return self.score.zone[self.zone_index][1], False
+
+        for i in range(self.zone_index, len(self.score.zone)):
+            if i < 0: continue
 
             if self.score.zone[i][0] >= pos and self.score.zone[i][2] == "end":
                 if self.score.zone[i - 1][0] <= pos and self.score.zone[i - 1][2] == "start":
-                    return self.score.zone[i][1]
-                else:
-                    return None
 
-        return None
+                    is_lidx_changes = (i - 1) != self.zone_index
+                    if is_lidx_changes:
+                        self.zone_index = i - 1
+                    return self.score.zone[i - 1][1], is_lidx_changes
+                else:
+                    return None, False
+
+        return None, False
+
+    def get_current_section(self, pos):
+        """
+        与えられた時間に置いて打つべき歌詞のデータを求める。
+
+        :param pos: 現在の時間
+        :return: データ, lyrincs_indexが変化したか
+        """
+
+        if self.score.section[self.section_index + 1][0] > pos:
+            return self.score.section[self.section_index][1], False
+
+        for i in range(self.section_index, len(self.score.section)):
+            if i < 0: continue
+
+            if self.score.section[i][0] >= pos:
+
+                is_lidx_changes = (i - 1) != self.section_index
+                if is_lidx_changes:
+                    self.section_index = i - 1
+                return self.score.section[i - 1][1], is_lidx_changes
+
+        return None, False
 
     def get_sentence_full_time(self):
         """
@@ -136,20 +194,40 @@ class GameJudgementInfo:
     COULDNT_TYPE_POINT = -2
 
     def __init__(self):
+
+        # --- Lyrics data
         self.target_roma = ""
         self.target_kana = ""
         self.full = ""
 
+        # --- Full count
         self.count = 0
         self.missed = 0
 
+        # --- Sentence count
         self.sent_miss = 0
         self.sent_count = 0
+
+        # --- Section count
+        self.section_miss = 0
+        self.section_count = 0
 
         self.point = 0
 
         self.completed = True
 
+
+    @property
+    def typed(self):
+        return self.count + self.missed
+
+    @property
+    def sent_typed(self):
+        return self.sent_count + self.sent_miss
+
+    @property
+    def section_typed(self):
+        return self.section_count + self.section_miss
 
     def get_sentence_missrate(self):
         """
@@ -165,6 +243,21 @@ class GameJudgementInfo:
             trying_sumup = 1
 
         return self.sent_count / trying_sumup
+
+    def get_sentence_missrate(self):
+        """
+        セクションごとの成功比率を求める。
+        成功回数+失敗回数が0の場合は、成功回数を返す。(つまり0になる)
+        :return: 成功比率（成功回数/(成功回数+失敗回数)）
+        """
+
+        trying_sumup = self.section_miss + self.section_count
+
+        # To prevent ZeroDivision
+        if trying_sumup == 0:
+            trying_sumup = 1
+
+        return self.section_count / trying_sumup
 
     def set_current_lyrinc(self, full, kana):
         """
@@ -182,7 +275,6 @@ class GameJudgementInfo:
         if len(self.target_roma) == 0:
             self.completed = True
 
-
     def reset_sentence_score(self):
         """
         歌詞ごとの進捗情報を消去する。
@@ -192,6 +284,15 @@ class GameJudgementInfo:
         self.sent_count= 0
         self.sent_miss = 0
         self.completed = False
+
+    def reset_section_score(self):
+        """
+        セクションごとの進捗情報を消去する。
+
+        :return: なし
+        """
+        self.section_count= 0
+        self.section_miss = 0
 
     def count_success(self):
         """
@@ -203,6 +304,7 @@ class GameJudgementInfo:
         self.count += 1
         self.point += GameJudgementInfo.ONE_CHAR_POINT
         self.sent_count += 1
+        self.section_count += 1
 
         self.target_roma = self.target_roma[1:]
         self.target_kana = Romautil.get_not_halfway_hr(self.target_kana, self.target_roma)
@@ -224,6 +326,7 @@ class GameJudgementInfo:
         """
         self.missed += 1
         self.sent_miss += 1
+        self.section_miss += 1
         self.point += GameJudgementInfo.MISS_POINT
 
     def is_expected_key(self, code):
