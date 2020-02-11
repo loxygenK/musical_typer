@@ -85,8 +85,14 @@ class GameProgressInfo:
 
         # TODO: 処理を軽くする(キャッシュとか使って)
 
-        if self.score.score[self.lyrincs_index + 1][0] > pos:
-            return self.score.score[self.lyrincs_index], False
+        if len(self.score.score) == 0:
+            return None, False
+
+        if self.lyrincs_index > len(self.score.score) - 1:
+            return self.score.score[len(self.score.score) - 1][1], False
+        else:
+            if self.score.score[self.lyrincs_index + 1][0] > pos:
+                return self.score.score[self.lyrincs_index], False
 
         for i in range(self.lyrincs_index, len(self.score.score)):
             if i < 0: continue
@@ -98,7 +104,7 @@ class GameProgressInfo:
                     self.lyrincs_index = i - 1
                 return self.score.score[i - 1], is_lidx_changes
 
-        return None
+        return None, False
 
     def get_current_zone(self, pos):
         """
@@ -109,8 +115,17 @@ class GameProgressInfo:
         """
         # TODO: 処理を軽くする(キャッシュとか使って)
 
-        if self.score.zone[self.zone_index + 1][0] > pos:
-            return self.score.zone[self.zone_index][1], False
+        if len(self.score.zone) == 0:
+            return None, False
+
+        if self.zone_index == len(self.score.zone) - 2:
+            if self.score.zone[self.zone_index + 1][0] > pos:
+                return self.score.zone[self.zone_index][1], False
+            else:
+                return None, False
+        else:
+            if self.score.zone[self.zone_index + 1][0] > pos:
+                return self.score.zone[self.zone_index][1], False
 
         for i in range(self.zone_index, len(self.score.zone)):
             if i < 0: continue
@@ -139,8 +154,14 @@ class GameProgressInfo:
         :return: データ, lyrincs_indexが変化したか
         """
 
-        if self.score.section[self.section_index + 1][0] > pos:
-            return self.score.section[self.section_index][1], False
+        if len(self.score.section) == 0:
+            return None, False
+
+        if self.section_index > len(self.score.section) - 1:
+            return self.score.section[len(self.score.section) - 1][1], False
+        else:
+            if self.score.zone[self.zone_index + 1][0] > pos:
+                return self.score.section[self.section_index][1], False
 
         for i in range(self.section_index, len(self.score.section)):
             if i < 0: continue

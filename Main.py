@@ -195,7 +195,11 @@ def main():
 
     ui.add_draw_method(60, DrawMethodTemplates.slide_fadeout_text, ["Song start!", (255, 127, 0), ui.system_font, 25])
     mainloop_continues = True
-    while mainloop_continues:
+    song_finished = False
+
+    pygame.mixer.music.set_volume(0.5)
+
+    while mainloop_continues and pygame.mixer.music.get_pos() > 0:
 
         # -----------------------
         #     Pre-Calculation
@@ -250,7 +254,7 @@ def main():
         # --------------------
 
         # If lyrics changed, re-initialize some things, such as judge_info
-        if lyx_idx:
+        if lyx_idx or (current_lyrincs is None and not song_finished):
 
             # Before it let's add score
             judge_info.point += GameJudgementInfo.COULDNT_TYPE_POINT * len(judge_info.target_roma)
@@ -258,6 +262,13 @@ def main():
             # And erase something
             judge_info.reset_sentence_score()
             judge_info.set_current_lyrinc(score_data.score[progress.lyrincs_index][1], score_data.score[progress.lyrincs_index][2])
+
+            # did song finish?
+            if current_lyrincs is None and not song_finished:
+                judge_info.set_current_lyrinc("", "")
+                song_finished = True
+                ui.add_draw_method(60, DrawMethodTemplates.slide_fadeout_text, ["Song Finished!", (255, 127, 0), ui.system_font, 25])
+
 
         # If section changed, there's some special calculation...
         if sct_idx:
