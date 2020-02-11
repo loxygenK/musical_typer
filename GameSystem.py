@@ -194,6 +194,7 @@ class GameJudgementInfo:
     ONE_CHAR_POINT = 10
     PERFECT_POINT = 100
     SECTION_PERFECT_POINT = 300
+    SPECIAL_POINT = 50
     CLEAR_POINT = 50
     MISS_POINT = -30
     COULDNT_TYPE_POINT = -2
@@ -352,5 +353,6 @@ class GameJudgementInfo:
 
 class SEControl:
     success = pygame.mixer.Sound("ses/success.wav")
+    special_success = pygame.mixer.Sound("ses/special.wav")
     failed = pygame.mixer.Sound("ses/failed.wav")
     unneccesary = pygame.mixer.Sound("ses/unneccesary.wav")

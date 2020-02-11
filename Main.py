@@ -214,8 +214,13 @@ def main():
                 if Romautil.is_readable_key_pressed(event.key):
                     # if correct key was pushed
                     if judge_info.is_expected_key(chr(event.key)):
-                        SEControl.success.play()
                         judge_info.count_success()
+                        # Add some special score
+                        if current_zone == "tech-zone":
+                            judge_info.point += judge_info.SPECIAL_POINT
+                            SEControl.special_success.play()
+                        else:
+                            SEControl.success.play()
                     else:
                         SEControl.failed.play()
                         judge_info.count_failure()
