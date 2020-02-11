@@ -124,7 +124,7 @@ class GameProgressInfo:
             else:
                 return None, False
         else:
-            if self.score.zone[self.zone_index + 1][0] > pos:
+            if self.score.zone[self.zone_index][0] <= pos < self.score.zone[self.zone_index + 1][0]:
                 return self.score.zone[self.zone_index][1], False
 
         for i in range(self.zone_index, len(self.score.zone)):
