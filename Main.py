@@ -191,6 +191,8 @@ def main():
     judge_info = GameJudgementInfo()
     ui = Screen()
 
+    game_finished_reason = ""
+
     ui.add_draw_method(60, DrawMethodTemplates.slide_fadeout_text, ["Song start!", (255, 127, 0), ui.system_font, 25])
     mainloop_continues = True
     while mainloop_continues:
@@ -274,6 +276,10 @@ def main():
         if zne_idx:
             ui.add_draw_method(15, DrawMethodTemplates.blink_screen, [(64, 64, 0)])
 
+        if judge_info.point < -300:
+            game_finished_reason = "gameover"
+            break
+
 
         # ----------------
         #     Drawing
@@ -310,10 +316,20 @@ def main():
             # Give information
             ui.print_str(5, 280, ui.full_font, "WA" if judge_info.sent_miss != 0 else "AC", (255, 255, 120))
 
-
         # 60fps
         pygame.time.wait(1000 // 60)
         pygame.display.update()
+
+    if game_finished_reason == "gameover":
+        ui.add_draw_method(300, DrawMethodTemplates.blink_screen, [(192, 0, 0)])
+        ui.add_draw_method(300, DrawMethodTemplates.slide_fadeout_text, ["Too many mistake!", (255, 127, 0), ui.nihongo_font, -25])
+        SEControl.gameover.play()
+        for _ in range(300):
+            pygame.mixer.music.fadeout(1000)
+            ui.update_draw_method()
+            pygame.time.wait(1000 // 60)
+            pygame.display.update()
+
 
 
     pygame.quit()

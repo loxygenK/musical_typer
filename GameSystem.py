@@ -356,3 +356,4 @@ class SEControl:
     special_success = pygame.mixer.Sound("ses/special.wav")
     failed = pygame.mixer.Sound("ses/failed.wav")
     unneccesary = pygame.mixer.Sound("ses/unneccesary.wav")
+    gameover = pygame.mixer.Sound("ses/gameover.wav")
