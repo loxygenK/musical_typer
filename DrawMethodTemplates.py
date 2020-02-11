@@ -16,7 +16,7 @@ def slide_fadeout_text(current_frame, total_frame, ui: Screen, args):
     text = args[2].render(args[0], True, color)
     text_w, text_h = text.get_size()
 
-    ui.print_str((w - text_w) / 2, (h - text_h) / 2 - args[3] * (current_frame / total_frame), ui.system_font, args[0], color)
+    ui.print_str((w - text_w) / 2, (h - text_h) / 2 - args[3] * (current_frame / total_frame), args[2], args[0], color)
 
 def blink_screen(current_frame, total_frame, ui: Screen, args):
     w, h = ui.screen_size
