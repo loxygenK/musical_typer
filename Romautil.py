@@ -54,3 +54,7 @@ def get_not_halfway_hr(full_hiragana, progress_roma):
         return romkan.to_hiragana(romaji[index - 1:])
 
     return romkan.to_hiragana(romaji[index:])
+
+
+def is_halfway(hiragana, english):
+    return hira2roma(get_not_halfway_hr(hiragana, english))[:1] != hira2roma(english)[:1]

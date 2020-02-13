@@ -1,6 +1,9 @@
 import pygame
+import romkan
+
 import pygame_misc
 import Romautil
+
 
 class Screen:
     """
@@ -35,7 +38,6 @@ class Screen:
             self.drawer[i][1] += 1
 
         self.drawer = list(filter(lambda x: x[1] < x[0], self.drawer))
-
 
 
 class GameProgressInfo:
@@ -374,6 +376,22 @@ class GameJudgementInfo:
         self.section_miss += 1
         self.point += GameJudgementInfo.MISS_POINT
 
+    def is_exactly_expected_key(self, code):
+        """
+        タイプされたキーが正確に期待されているキーか確認する。
+        is_excepted_keyと違って、ローマ字表記の仕方の違いを許容しない。
+        ゲーム内での判定では、is_expected_keyを使おう
+
+        :param code: タイプされたキー
+        :return: 正しい場合はTrue
+        """
+
+        if len(self.target_roma) == 0:
+            return False
+
+        return self.target_roma[0] == code
+
+
     def is_expected_key(self, code):
         """
         タイプされたキーが期待されているキーか確認する。
@@ -385,9 +403,26 @@ class GameJudgementInfo:
         if len(self.target_roma) == 0:
             return False
 
-        print(code, end="")
+        if not Romautil.is_halfway(self.target_kana, self.target_roma):
+            first_character = self.target_kana[:1]
+            kunrei = romkan.to_kunrei(first_character)
+            hepburn = romkan.to_hepburn(first_character)
 
-        return self.target_roma[0] == code
+            if kunrei[0] == "x":
+                return self.is_exactly_expected_key(code)
+
+            if kunrei[0] == code:
+                print("Kunrei, approve.")
+                return True
+            elif hepburn[0] == code:
+                print("Hepburn, approve.")
+                self.target_roma = hepburn + self.target_roma[len(kunrei):]
+                return True
+            else:
+                print("kunrei nor hepburn, deny.")
+                return False
+        else:
+            return self.is_exactly_expected_key(code)
 
 
 class SEControl:
