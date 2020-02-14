@@ -193,19 +193,20 @@ def main():
 
     game_finished_reason = ""
 
-    ui.add_draw_method(60, DrawMethodTemplates.slide_fadeout_text, ["Song start!", (255, 127, 0), ui.system_font, 25])
+    ui.add_background_draw_method(60, DrawMethodTemplates.slide_fadeout_text, ["Song start!", (255, 127, 0), ui.system_font, 25, 0, 0])
     mainloop_continues = True
     song_finished = False
 
     pygame.mixer.music.set_volume(0.5)
 
+    frame_count = 0
     while mainloop_continues and pygame.mixer.music.get_pos() > 0:
-
-        start = time.time()
 
         # -----------------------
         #     Pre-Calculation
         # -----------------------
+
+        frame_count = (frame_count + 1) % 60
 
         # get some values
         pos = pygame.mixer.music.get_pos() / 1000
@@ -213,6 +214,8 @@ def main():
         current_lyrincs, lyx_idx = progress.get_current_lyrincs(pos)
         current_zone,    zne_idx = progress.get_current_zone(pos)
         current_section, sct_idx = progress.get_current_section(pos)
+
+        w, h = ui.screen_size
 
         # ------------------------
         #     Events / Judging
@@ -236,17 +239,34 @@ def main():
                         key_speeder.ticked(pos)
                         judge_info.count_success()
                         # Add some special score
+                        ui.add_foreground_draw_method(30, DrawMethodTemplates.slide_fadeout_text,
+                                                      ["Pass", more_blackish(GREEN_THIN_COLOR, 50), ui.alphabet_font, 10, -150, -383])
                         if current_zone == "tech-zone":
                             judge_info.point += judge_info.SPECIAL_POINT
                             SEControl.special_success.play()
                         else:
                             SEControl.success.play()
+
+                        # Did player finished the sentence by this type?
+                        if judge_info.completed and judge_info.sent_typed > 0:
+                            if judge_info.sent_miss == 0:
+                                ui.add_foreground_draw_method(120, DrawMethodTemplates.slide_fadeout_text,
+                                                              ["AC", GREEN_THICK_COLOR, ui.alphabet_font, 20, -170, -383])
+                                ui.add_background_draw_method(15, DrawMethodTemplates.blink_rect,
+                                                              [more_whiteish(GREEN_THIN_COLOR, 50), (0, 60, w, 130)])
+                            else:
+                                ui.add_foreground_draw_method(120, DrawMethodTemplates.slide_fadeout_text,
+                                                              ["WA", more_whiteish(BLUE_THICK_COLOR, 100), ui.alphabet_font, 20, -170, -383])
+                                ui.add_background_draw_method(15, DrawMethodTemplates.blink_rect,
+                                                              [more_whiteish(BLUE_THICK_COLOR, 100), (0, 60, w, 130)])
                     else:
                         SEControl.failed.play()
                         judge_info.count_failure()
                         # blink screen
-                        ui.add_draw_method(15, DrawMethodTemplates.blink_screen, [(127, 0, 0)])
-
+                        ui.add_background_draw_method(15, DrawMethodTemplates.blink_screen, [(255, 200, 200)])
+                        ui.add_foreground_draw_method(30, DrawMethodTemplates.slide_fadeout_text,
+                                                      ["WA", more_whiteish(RED_COLOR, 50), ui.alphabet_font,
+                                                       10, -150, -383])
 
                 if event.key == K_ESCAPE:
                     mainloop_continues = False
@@ -267,6 +287,14 @@ def main():
             # Then record
             judge_info.record_sentence_score()
 
+            # Did player TLE?
+            if len(judge_info.target_roma) > 0:
+                ui.add_foreground_draw_method(30, DrawMethodTemplates.slide_fadeout_text,
+                                              ["TLE", more_blackish(RED_COLOR, 50), ui.alphabet_font, -10,
+                                               -150, -383])
+                ui.add_background_draw_method(15, DrawMethodTemplates.blink_rect,
+                                              [more_whiteish(RED_COLOR, 50), (0, 60, w, 130)])
+
             # And erase something
             judge_info.reset_sentence_score()
             judge_info.set_current_lyrinc(score_data.score[progress.lyrincs_index][1], score_data.score[progress.lyrincs_index][2])
@@ -278,7 +306,7 @@ def main():
             if current_lyrincs is None and not song_finished:
                 judge_info.set_current_lyrinc("", "")
                 song_finished = True
-                ui.add_draw_method(60, DrawMethodTemplates.slide_fadeout_text, ["Song Finished!", (255, 127, 0), ui.system_font, 25])
+                ui.add_background_draw_method(60, DrawMethodTemplates.slide_fadeout_text, ["Song Finished!", (255, 127, 0), ui.system_font, 25, 0, 0])
 
 
         # If section changed, there's some special calculation...
@@ -286,7 +314,7 @@ def main():
 
             # If player completed this section, let's cerebrate it and add score
             if judge_info.section_miss == 0 and judge_info.section_count != 0:
-                ui.add_draw_method(60, DrawMethodTemplates.slide_fadeout_text, ["Section AC!a", (255, 127, 0), ui.system_font, 25])
+                ui.add_background_draw_method(60, DrawMethodTemplates.slide_fadeout_text, ["Section AC!", (255, 127, 0), ui.system_font, 25, 0, 0])
                 judge_info.point += judge_info.SECTION_PERFECT_POINT
 
             # Then record
@@ -295,58 +323,77 @@ def main():
             # And erase section result data
             judge_info.reset_section_score()
 
-            # cool blink
-            ui.add_draw_method(15, DrawMethodTemplates.blink_screen, [(0, 0, 64)])
-
         if zne_idx:
-            ui.add_draw_method(15, DrawMethodTemplates.blink_screen, [(64, 64, 0)])
+            ui.add_background_draw_method(15, DrawMethodTemplates.blink_screen, [(64, 64, 0)])
 
         if judge_info.point < -300:
             game_finished_reason = "gameover"
             break
 
+        is_ac = judge_info.completed and judge_info.sent_count > 0 and judge_info.sent_miss == 0
 
         # ----------------
         #     Drawing
         # ----------------
 
+        # [ Background ]
+
         # reset screen
         ui.screen.fill(BACKGROUND_COLOR)
-        w, h = ui.screen_size
 
         # update drawing method
-        ui.update_draw_method()
-        # Debug output
 
-        pygame.draw.rect(ui.screen, more_blackish(BACKGROUND_COLOR, 25), (0, 60,w, 130))
-        pygame.draw.rect(ui.screen, more_blackish(BACKGROUND_COLOR, 50), (0, 60, math.floor(progress.get_time_remain_ratio(pos) * w), 130))
-
+        # Song information
         DrawingUtil.write_limit(ui.screen, (w - 2, 0), w / 2, ui.alphabet_font, score_data.properties["title"])
         DrawingUtil.write_limit(ui.screen, (w - 5, 33), w / 2, ui.system_font,
                                 score_data.properties["song_author"] + "／" + score_data.properties["singer"],
                                 more_whiteish(TEXT_COLOR, 100))
 
+        # Time remaining gauge background
+        pygame.draw.rect(ui.screen, more_blackish(BACKGROUND_COLOR, 25), (0, 60, w, 130))
+        pygame.draw.rect(ui.screen, more_blackish(BACKGROUND_COLOR, 50), (0, 60, math.floor(progress.get_time_remain_ratio(pos) * w), 130))
+
+        ui.update_background_draw_method()
+
+        # [ Foreground ]
+
+        # Lyrics
         DrawingUtil.print_progress(ui.screen, (w / 2, 80), MARGIN + 5, ui.get_font_by_size(50),
                                    judge_info.typed_kana, judge_info.target_kana)
         DrawingUtil.print_progress(ui.screen, (w / 2, 130), MARGIN + 5, ui.full_font,
                                    judge_info.typed_roma, judge_info.target_roma)
 
-        pygame.draw.rect(ui.screen, GREEN_THICK_COLOR, (0, 187, w * judge_info.get_sentence_missrate(), 3))
+        # mistake rate gauge
+        pygame.draw.rect(ui.screen, GREEN_THICK_COLOR if not is_ac else RED_COLOR, (0, 60, w * judge_info.get_sentence_missrate(), 3))
+        pygame.draw.rect(ui.screen, GREEN_THICK_COLOR, (0, 187, w * judge_info.get_full_missrate(), 3))
 
-        keyboard_drawer.draw(ui.screen, 193, ui.full_font, 40, 5, judge_info.target_roma[:1], 2)
+        # keyboard
+        keyboard_drawer.draw(ui.screen, 193, ui.full_font, 40, 5, judge_info.target_roma[:1], 2,
+                             background_color=(192, 192, 192) if judge_info.completed else None)
 
-        ui.print_str(3, 36, ui.system_font, "{:5.2f} fps".format(fps_clock.get_fps()), TEXT_COLOR)
+        # Score
+        if judge_info.point < 0:
+            if frame_count % 20 < 10:
+                ui.print_str(5, 20, ui.alphabet_font, "{:08d}".format(judge_info.point), RED_COLOR)
+            else:
+                ui.print_str(5, 20, ui.alphabet_font, "{:08d}".format(judge_info.point), BLUE_THICK_COLOR)
+        else:
+            ui.print_str(5, 20, ui.alphabet_font, "{:08d}".format(judge_info.point), BLUE_THICK_COLOR)
+
+        ui.update_foreground_draw_method()
+
+        ui.print_str(3, -3, ui.system_font, "{:5.2f} fps".format(fps_clock.get_fps()), TEXT_COLOR)
 
         fps_clock.tick(60)
         pygame.display.update()
 
     if game_finished_reason == "gameover":
-        ui.add_draw_method(300, DrawMethodTemplates.blink_screen, [(192, 0, 0)])
-        ui.add_draw_method(300, DrawMethodTemplates.slide_fadeout_text, ["Too many mistake!", (255, 127, 0), ui.nihongo_font, -25])
+        ui.add_background_draw_method(300, DrawMethodTemplates.blink_screen, [(192, 0, 0)])
+        ui.add_background_draw_method(300, DrawMethodTemplates.slide_fadeout_text, ["Too many mistake!", (255, 127, 0), ui.nihongo_font, -25, 0, 0])
         SEControl.gameover.play()
         for _ in range(300):
             pygame.mixer.music.fadeout(1000)
-            ui.update_draw_method()
+            ui.update_background_draw_method()
             pygame.time.wait(1000 // 60)
             pygame.display.update()
 
