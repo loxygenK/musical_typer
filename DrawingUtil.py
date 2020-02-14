@@ -6,6 +6,31 @@ from ColorTheme import *
 import time
 
 
+class KeyboardDrawer:
+    # Drawing keyboard
+    keyboard = ["1234567890-\^", "qwertyuiop@[", "asdfghjkl;:]", "zxcvbnm,./\\"]
+
+    def __init__(self):
+        pass
+
+    def draw(self, screen, start_y, font, key_size, key_margin, highlight = "", width = 1):
+        w, h = pygame.display.get_surface().get_size()
+        size = key_size + key_margin
+        for i in range(4):
+            key = self.keyboard[i]
+            start = (w - size * len(key)) / 2
+            for j in range(len(key)):
+                is_highlight_needed = (highlight != "" and highlight.lower() == key[j].lower())
+                if is_highlight_needed:
+                    pygame.draw.rect(screen, GREEN_THICK_COLOR,
+                                 (start + size * j, start_y + size * i, key_size, key_size), 0)
+
+                pygame.draw.rect(screen, TEXT_COLOR,
+                                 (start + size * j, start_y + size * i, key_size, key_size), width)
+
+                chr = font.render(key[j].upper(), True, TEXT_COLOR if not is_highlight_needed else invert_color(TEXT_COLOR))
+                screen.blit(chr, (start + size * j + key_size // 2 - chr.get_width() // 2, start_y + size * i + key_size // 2 - chr.get_height() // 2))
+
 @DeprecationWarning
 def arc(surface, color, pos, radius, start_angle, stop_angle, width = 1):
 

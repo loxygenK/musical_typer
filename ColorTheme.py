@@ -12,3 +12,7 @@ def more_whiteish(base_color, delta):
 
 def more_blackish(base_color, delta):
     return tuple(max(x - delta, 0) for x in base_color)
+
+
+def invert_color(base_color):
+    return tuple(255 - x for x in base_color)

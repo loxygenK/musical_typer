@@ -186,6 +186,7 @@ def main():
     progress = GameProgressInfo(score_data)
     judge_info = GameJudgementInfo()
     key_speeder = KeySpeedCalculator()
+    keyboard_drawer = DrawingUtil.KeyboardDrawer()
     ui = Screen()
 
     fps_clock = pygame.time.Clock()
@@ -331,6 +332,10 @@ def main():
                                    judge_info.typed_roma, judge_info.target_roma)
 
         pygame.draw.rect(ui.screen, GREEN_THICK_COLOR, (0, 187, w * judge_info.get_sentence_missrate(), 3))
+
+        keyboard_drawer.draw(ui.screen, 193, ui.full_font, 40, 5, judge_info.target_roma[:1], 2)
+
+        ui.print_str(3, 36, ui.system_font, "{:5.2f} fps".format(fps_clock.get_fps()), TEXT_COLOR)
 
         fps_clock.tick(60)
         pygame.display.update()
