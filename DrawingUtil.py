@@ -8,7 +8,7 @@ import time
 
 class KeyboardDrawer:
     # Drawing keyboard
-    keyboard = ["1234567890-\^", "qwertyuiop@[", "asdfghjkl;:]", "zxcvbnm,./\\"]
+    keyboard = ["1234567890-\\^", "qwertyuiop@[", "asdfghjkl;:]", "zxcvbnm,./\\"]
     highlight_text = "fj"
 
     def __init__(self):
