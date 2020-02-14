@@ -9,11 +9,12 @@ import time
 class KeyboardDrawer:
     # Drawing keyboard
     keyboard = ["1234567890-\^", "qwertyuiop@[", "asdfghjkl;:]", "zxcvbnm,./\\"]
+    highlight_text = "fj"
 
     def __init__(self):
         pass
 
-    def draw(self, screen, start_y, font, key_size, key_margin, highlight = "", width = 1):
+    def draw(self, screen, start_y, font, key_size, key_margin, highlight = "", width = 1, background_color = None):
         w, h = pygame.display.get_surface().get_size()
         size = key_size + key_margin
         for i in range(4):
@@ -24,11 +25,20 @@ class KeyboardDrawer:
                 if is_highlight_needed:
                     pygame.draw.rect(screen, GREEN_THICK_COLOR,
                                  (start + size * j, start_y + size * i, key_size, key_size), 0)
+                elif background_color is not None:
+                    pygame.draw.rect(screen, background_color,
+                                 (start + size * j, start_y + size * i, key_size, key_size), 0)
 
                 pygame.draw.rect(screen, TEXT_COLOR,
                                  (start + size * j, start_y + size * i, key_size, key_size), width)
 
-                chr = font.render(key[j].upper(), True, TEXT_COLOR if not is_highlight_needed else invert_color(TEXT_COLOR))
+                color = TEXT_COLOR
+                if is_highlight_needed:
+                    color = invert_color(TEXT_COLOR)
+                elif key[j] in self.highlight_text:
+                    color = BLUE_THICK_COLOR
+
+                chr = font.render(key[j].upper(), True, color)
                 screen.blit(chr, (start + size * j + key_size // 2 - chr.get_width() // 2, start_y + size * i + key_size // 2 - chr.get_height() // 2))
 
 @DeprecationWarning
