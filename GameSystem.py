@@ -17,8 +17,9 @@ class Screen:
     system_font = pygame.font.Font("mplus-1m-medium.ttf", 16)
 
     def __init__(self):
-        self.screen = pygame.display.set_mode((600, 480))
-        self.drawer = []
+        self.screen = pygame.display.set_mode((640, 853))
+        self.foreground_color = []
+        self.background_color = []
         pygame.display.set_caption("Musical Typer")
 
     @property
@@ -27,18 +28,29 @@ class Screen:
 
     def print_str(self, x, y, font, text, color=(255, 255, 255)):
         pygame_misc.print_str(self.screen, x, y, font, text, color)
+    
+    def add_foreground_draw_method(self, living_frame, draw_func, argument=None):
+        self.foreground_color.append([living_frame, 0, draw_func, argument])
+    
+    def add_background_draw_method(self, living_frame, draw_func, argument=None):
+        self.background_color.append([living_frame, 0, draw_func, argument])
+    
+    def update_foreground_draw_method(self):
+        for i in range(len(self.foreground_color)):
+            self.foreground_color[i][2](self.foreground_color[i][1], self.foreground_color[i][0], self, self.foreground_color[i][3])
+            self.foreground_color[i][1] += 1
 
-    def add_draw_method(self, living_frame, draw_func, argument=None):
-        self.drawer.append([living_frame, 0, draw_func, argument])
+        self.foreground_color = list(filter(lambda x: x[1] < x[0], self.foreground_color))
+    
+    def update_background_draw_method(self):
+        for i in range(len(self.background_color)):
+            self.background_color[i][2](self.background_color[i][1], self.background_color[i][0], self, self.background_color[i][3])
+            self.background_color[i][1] += 1
 
-    def update_draw_method(self):
-        for i in range(len(self.drawer)):
-            self.drawer[i][2](self.drawer[i][1], self.drawer[i][0], self, self.drawer[i][3])
+        self.background_color = list(filter(lambda x: x[1] < x[0], self.background_color))
 
-            self.drawer[i][1] += 1
-
-        self.drawer = list(filter(lambda x: x[1] < x[0], self.drawer))
-
+    def get_font_by_size(self, size):
+        return pygame.font.Font("mplus-1m-medium.ttf", size)
 
 class GameProgressInfo:
     """
@@ -227,6 +239,8 @@ class GameJudgementInfo:
         # --- Lyrics data
         self.target_roma = ""
         self.target_kana = ""
+        self.full_kana = ""
+        self.typed_roma = ""
         self.full = ""
 
         # --- Full count
@@ -249,6 +263,14 @@ class GameJudgementInfo:
 
         self.completed = True
 
+    @property
+    def typed_kana(self):
+        typed_index = self.full_kana.index(self.target_kana)
+
+        if len(self.target_kana) > 0:
+            return self.full_kana[:typed_index]
+        else:
+            return self.full_kana
 
     @property
     def typed(self):
@@ -270,6 +292,15 @@ class GameJudgementInfo:
             trying_sumup = 1
 
         return count / trying_sumup
+
+    def get_full_missrate(self):
+        """
+        全体での成功比率を求める。
+        成功回数+失敗回数が0の場合は、成功回数を返す。(つまり0になる)
+
+        :return: 成功比率（成功回数/(成功回数+失敗回数)）
+        """
+        return self.calc_missrate(self.count, self.missed)
 
     def get_sentence_missrate(self, count=-1, miss=-1):
         """
@@ -301,6 +332,7 @@ class GameJudgementInfo:
 
         self.full = full
         self.target_kana = kana
+        self.full_kana = kana
         self.target_roma = Romautil.hira2roma(self.target_kana)
 
         if len(self.target_roma) == 0:
@@ -330,6 +362,7 @@ class GameJudgementInfo:
         """
         self.sent_count= 0
         self.sent_miss = 0
+        self.typed_roma = ""
         self.completed = False
 
     def reset_section_score(self):
@@ -353,6 +386,7 @@ class GameJudgementInfo:
         self.sent_count += 1
         self.section_count += 1
 
+        self.typed_roma += self.target_roma[:1]
         self.target_roma = self.target_roma[1:]
         self.target_kana = Romautil.get_not_halfway_hr(self.target_kana, self.target_roma)
 
@@ -461,7 +495,8 @@ class KeySpeedCalculator:
         return sum(self.key_log) / len(self.key_log)
 
     def get_key_per_second(self):
+        # TODO: Incorrect calculation! This is temporaly divided by 2
         if len(self.key_log) == 0:
             return 0
 
-        return 1 / self.get_average()
+        return 1 / self.get_average() / 2
