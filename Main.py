@@ -193,7 +193,6 @@ def main():
 
     game_finished_reason = ""
 
-    ui.add_background_draw_method(60, DrawMethodTemplates.slide_fadeout_text, ["Song start!", (255, 127, 0), ui.system_font, 25, 0, 0])
     mainloop_continues = True
     song_finished = False
 
@@ -323,9 +322,6 @@ def main():
             # And erase section result data
             judge_info.reset_section_score()
 
-        if zne_idx:
-            ui.add_background_draw_method(15, DrawMethodTemplates.blink_screen, [(64, 64, 0)])
-
         if judge_info.point < -300:
             game_finished_reason = "gameover"
             break
@@ -379,6 +375,40 @@ def main():
                 ui.print_str(5, 20, ui.alphabet_font, "{:08d}".format(judge_info.point), BLUE_THICK_COLOR)
         else:
             ui.print_str(5, 20, ui.alphabet_font, "{:08d}".format(judge_info.point), BLUE_THICK_COLOR)
+
+        # Realtime score area
+        pygame.draw.line(ui.screen, more_whiteish(TEXT_COLOR, 100), (0, 375), (w, 375), 2)
+
+        # Type Speed
+        ui.print_str(MARGIN, 382, ui.get_font_by_size(14), "タイピング速度", more_whiteish(TEXT_COLOR, 100))
+        if key_speeder.get_key_per_second() > 2:
+            color = more_blackish(RED_COLOR, 30 if frame_count % 10 < 5 else 0)
+            pygame.draw.rect(ui.screen, color, (MARGIN, 400, w - MARGIN * 2, 20))
+        else:
+            pygame.draw.rect(ui.screen,               GREEN_THIN_COLOR     , (MARGIN, 400, w - MARGIN * 2, 20))
+            pygame.draw.rect(ui.screen, more_blackish(GREEN_THIN_COLOR, 50), (MARGIN, 400, key_speeder.get_key_per_second() / 5 * (w - MARGIN * 2), 20))
+
+        DrawingUtil.write_center_x(ui.screen, w / 2, 398, ui.system_font, "{:4.2f} Char/sec".format(key_speeder.get_key_per_second()), TEXT_COLOR)
+
+        # Accuracy Numeric Value
+        pygame.draw.rect(ui.screen, more_blackish(TEXT_COLOR, 50),
+                         (MARGIN + 10, 510, judge_info.get_sentence_missrate() * 175, 3))
+        ui.print_str(MARGIN, 430, ui.get_font_by_size(14), "正確率の詳細", more_whiteish(TEXT_COLOR, 100))
+        ui.print_str(MARGIN + 10, 450, ui.system_font, "文単位", more_whiteish(TEXT_COLOR, 50))
+        ui.print_str(MARGIN + 10, 460, ui.nihongo_font, "{:06.2f}%".format(judge_info.get_sentence_missrate() * 100),
+                     tuple(x * judge_info.get_sentence_missrate() for x in RED_COLOR))
+
+        pygame.draw.rect(ui.screen, more_blackish(TEXT_COLOR, 50),
+                         (MARGIN + 200, 510, judge_info.get_section_missrate() * 175, 3))
+        ui.print_str(MARGIN + 200, 450, ui.system_font, "セクション単位", more_whiteish(TEXT_COLOR, 50))
+        ui.print_str(MARGIN + 200, 460, ui.nihongo_font, "{:06.2f}%".format(judge_info.get_section_missrate() * 100),
+                     tuple(x * judge_info.get_section_missrate() for x in RED_COLOR))
+
+        pygame.draw.rect(ui.screen, more_blackish(TEXT_COLOR, 50),
+                         (MARGIN + 400, 510, judge_info.get_full_missrate() * 175, 3))
+        ui.print_str(MARGIN + 400, 450, ui.system_font, "全体", more_whiteish(TEXT_COLOR, 50))
+        ui.print_str(MARGIN + 400, 460, ui.nihongo_font, "{:06.2f}%".format(judge_info.get_full_missrate() * 100),
+                     tuple(x * judge_info.get_full_missrate() for x in RED_COLOR))
 
         ui.update_foreground_draw_method()
 

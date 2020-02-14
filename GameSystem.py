@@ -460,7 +460,8 @@ class KeySpeedCalculator:
         return sum(self.key_log) / len(self.key_log)
 
     def get_key_per_second(self):
+        # TODO: Incorrect calculation! This is temporaly divided by 2
         if len(self.key_log) == 0:
             return 0
 
-        return 1 / self.get_average()
+        return 1 / self.get_average() / 2

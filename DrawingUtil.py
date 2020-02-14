@@ -107,3 +107,9 @@ def print_progress(screen, pos, left_limit, font, typed, remain, past_color=None
     write_limit(screen, pos, left_limit, font, typed, past_color)
     rect_nottyped = font.render(remain, True, remain_color)
     screen.blit(rect_nottyped, pos, (0, 0, (pos[0] - left_limit), rect_nottyped.get_height()))
+
+
+def write_center_x(window, x, y, font, text, color=(255, 255, 255)):
+
+    rect = font.render(text, True, color)
+    window.blit(rect, (x - rect.get_width() / 2, y))
