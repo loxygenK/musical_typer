@@ -15,7 +15,8 @@ class Screen:
 
     def __init__(self):
         self.screen = pygame.display.set_mode((640, 853))
-        self.drawer = []
+        self.foreground_color = []
+        self.background_color = []
         pygame.display.set_caption("Musical Typer")
 
     @property
@@ -24,17 +25,26 @@ class Screen:
 
     def print_str(self, x, y, font, text, color=(255, 255, 255)):
         pygame_misc.print_str(self.screen, x, y, font, text, color)
+    
+    def add_foreground_draw_method(self, living_frame, draw_func, argument=None):
+        self.foreground_color.append([living_frame, 0, draw_func, argument])
+    
+    def add_background_draw_method(self, living_frame, draw_func, argument=None):
+        self.background_color.append([living_frame, 0, draw_func, argument])
+    
+    def update_foreground_draw_method(self):
+        for i in range(len(self.foreground_color)):
+            self.foreground_color[i][2](self.foreground_color[i][1], self.foreground_color[i][0], self, self.foreground_color[i][3])
+            self.foreground_color[i][1] += 1
 
-    def add_draw_method(self, living_frame, draw_func, argument=None):
-        self.drawer.append([living_frame, 0, draw_func, argument])
+        self.foreground_color = list(filter(lambda x: x[1] < x[0], self.foreground_color))
+    
+    def update_background_draw_method(self):
+        for i in range(len(self.background_color)):
+            self.background_color[i][2](self.background_color[i][1], self.background_color[i][0], self, self.background_color[i][3])
+            self.background_color[i][1] += 1
 
-    def update_draw_method(self):
-        for i in range(len(self.drawer)):
-            self.drawer[i][2](self.drawer[i][1], self.drawer[i][0], self, self.drawer[i][3])
-
-            self.drawer[i][1] += 1
-
-        self.drawer = list(filter(lambda x: x[1] < x[0], self.drawer))
+        self.background_color = list(filter(lambda x: x[1] < x[0], self.background_color))
 
     def get_font_by_size(self, size):
         return pygame.font.Font("mplus-1m-medium.ttf", size)
@@ -280,6 +290,15 @@ class GameJudgementInfo:
             trying_sumup = 1
 
         return count / trying_sumup
+
+    def get_full_missrate(self):
+        """
+        全体での成功比率を求める。
+        成功回数+失敗回数が0の場合は、成功回数を返す。(つまり0になる)
+
+        :return: 成功比率（成功回数/(成功回数+失敗回数)）
+        """
+        return self.calc_missrate(self.count, self.missed)
 
     def get_sentence_missrate(self, count=-1, miss=-1):
         """
