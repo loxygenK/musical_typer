@@ -14,7 +14,7 @@ class Screen:
     system_font = pygame.font.Font("mplus-1m-medium.ttf", 16)
 
     def __init__(self):
-        self.screen = pygame.display.set_mode((600, 480))
+        self.screen = pygame.display.set_mode((640, 853))
         self.drawer = []
         pygame.display.set_caption("Musical Typer")
 
@@ -225,6 +225,8 @@ class GameJudgementInfo:
         # --- Lyrics data
         self.target_roma = ""
         self.target_kana = ""
+        self.full_kana = ""
+        self.typed_roma = ""
         self.full = ""
 
         # --- Full count
@@ -247,6 +249,14 @@ class GameJudgementInfo:
 
         self.completed = True
 
+    @property
+    def typed_kana(self):
+        typed_index = self.full_kana.index(self.target_kana)
+
+        if len(self.target_kana) > 0:
+            return self.full_kana[:typed_index]
+        else:
+            return self.full_kana
 
     @property
     def typed(self):
@@ -299,6 +309,7 @@ class GameJudgementInfo:
 
         self.full = full
         self.target_kana = kana
+        self.full_kana = kana
         self.target_roma = Romautil.hira2roma(self.target_kana)
 
         if len(self.target_roma) == 0:
@@ -328,6 +339,7 @@ class GameJudgementInfo:
         """
         self.sent_count= 0
         self.sent_miss = 0
+        self.typed_roma = ""
         self.completed = False
 
     def reset_section_score(self):
@@ -351,6 +363,7 @@ class GameJudgementInfo:
         self.sent_count += 1
         self.section_count += 1
 
+        self.typed_roma += self.target_roma[:1]
         self.target_roma = self.target_roma[1:]
         self.target_kana = Romautil.get_not_halfway_hr(self.target_kana, self.target_roma)
 

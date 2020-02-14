@@ -1,5 +1,8 @@
 import math
 import pygame
+
+import DrawingUtil
+
 pygame.mixer.pre_init(44100, 16, 2, 1024)
 pygame.mixer.init()
 pygame.init()
@@ -11,6 +14,7 @@ import DrawMethodTemplates
 import re
 from GameSystem import *
 
+from ColorTheme import *
 
 class Score:
     LOG_ERROR = 1
@@ -301,46 +305,21 @@ def main():
         # ----------------
 
         # reset screen
-        ui.screen.fill((0, 0, 0))
+        ui.screen.fill(BACKGROUND_COLOR)
         w, h = ui.screen_size
 
         # update drawing method
         ui.update_draw_method()
 
         # Sentence remain time guage
-        pygame.draw.rect(ui.screen, (128, 0, 0), (0, 0, math.floor(progress.get_time_remain_ratio(pos) * w), 120))
+        # DrawingUtil.arc(ui.screen, GREEN_THIN_COLOR, (w / 2, h / 2), (w / 2) - 30, 0, 360, 5)
+        DrawingUtil.arc(ui.screen, more_blackish(BACKGROUND_COLOR, 25), (w // 2, h // 2), (w // 2) - 30, 0, 360, (w // 2) - 30)
+        DrawingUtil.arc(ui.screen, more_blackish(BACKGROUND_COLOR, 50), (w // 2, h // 2), (w // 2) - 30, -90, -90 + 360 * progress.get_time_remain_ratio(pos), (w // 2) - 30)
 
         # Debug output
-        ui.print_str(5, 0,   ui.nihongo_font,   judge_info.target_kana)
-        ui.print_str(5, 55,  ui.full_font,      judge_info.full, (192, 192, 192))
-        ui.print_str(5, 80,  ui.alphabet_font,  judge_info.target_roma)
-        ui.print_str(5, 130, ui.system_font,    "Full:     {} / {} ({})".format(judge_info.count, judge_info.missed, judge_info.typed))
-        ui.print_str(5, 150, ui.system_font,    "Sentence: {} / {} ({})".format(judge_info.sent_count, judge_info.sent_miss, judge_info.sent_typed))
-        ui.print_str(5, 170, ui.system_font,    "Section : {} / {} ({})".format(judge_info.section_count, judge_info.section_miss, judge_info.section_typed))
-        ui.print_str(5, 190, ui.full_font,      "Score: {}".format(judge_info.point))
-        ui.print_str(5, 240, ui.system_font,    "Zone: {}".format(current_zone))
-        ui.print_str(5, 260, ui.system_font,    "Section: {}".format(current_section))
-        ui.print_str(5, 280, ui.system_font,    "{} Key/s".format(key_speeder.get_key_per_second()))
 
-        ui.print_str(5, 350, ui.system_font,    str(pos))
-
-        # Missrate Info
-        pygame.draw.rect(ui.screen, (255, 0, 0), (0, 85, math.floor(judge_info.get_sentence_missrate() * w), 2))
-        pygame.draw.rect(ui.screen, (255, 0, 0), (0, 87, math.floor(judge_info.get_section_missrate() * w), 2))
-
-        # Does player completed?
-        if judge_info.completed and judge_info.sent_count > 0:
-            # Give information
-            ui.print_str(5, 280, ui.full_font, "WA" if judge_info.sent_miss != 0 else "AC", (255, 255, 120))
-
-        for i in range(len(judge_info.sentence_log)):
-            missrate = judge_info.calc_missrate(*judge_info.sentence_log[i][:-1])
-            pygame.draw.rect(ui.screen, (255, 0, 0), (0, 400 + 2 * i, math.floor(missrate * w // 2), 2))
-
-        for i in range(len(judge_info.section_log)):
-            missrate = judge_info.calc_missrate(*judge_info.section_log[i])
-            pygame.draw.rect(ui.screen, (0, 0, 255), (w // 2, 400 + 2 * i, math.floor(missrate * w // 2), 2))
-
+        DrawingUtil.print_progress(ui.screen, ui.alphabet_font, judge_info.typed_kana, judge_info.target_kana, 65, w / 2, 300)
+        DrawingUtil.print_progress(ui.screen, ui.full_font, judge_info.typed_roma, judge_info.target_roma, 55, w / 2, 330)
 
         # 60fps
         pygame.time.wait(1000 // 60)
