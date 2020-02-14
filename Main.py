@@ -1,3 +1,5 @@
+import time
+
 import math
 import pygame
 
@@ -173,7 +175,6 @@ def read_score(file_name):
 
     return score
 
-
 def main():
 
     score_data = read_score("test_music_text.tsc")
@@ -187,6 +188,8 @@ def main():
     key_speeder = KeySpeedCalculator()
     ui = Screen()
 
+    fps_clock = pygame.time.Clock()
+
     game_finished_reason = ""
 
     ui.add_draw_method(60, DrawMethodTemplates.slide_fadeout_text, ["Song start!", (255, 127, 0), ui.system_font, 25])
@@ -196,6 +199,8 @@ def main():
     pygame.mixer.music.set_volume(0.5)
 
     while mainloop_continues and pygame.mixer.music.get_pos() > 0:
+
+        start = time.time()
 
         # -----------------------
         #     Pre-Calculation
@@ -310,19 +315,24 @@ def main():
 
         # update drawing method
         ui.update_draw_method()
-
-        # Sentence remain time guage
-        # DrawingUtil.arc(ui.screen, GREEN_THIN_COLOR, (w / 2, h / 2), (w / 2) - 30, 0, 360, 5)
-        DrawingUtil.arc(ui.screen, more_blackish(BACKGROUND_COLOR, 25), (w // 2, h // 2), (w // 2) - 30, 0, 360, (w // 2) - 30)
-        DrawingUtil.arc(ui.screen, more_blackish(BACKGROUND_COLOR, 50), (w // 2, h // 2), (w // 2) - 30, -90, -90 + 360 * progress.get_time_remain_ratio(pos), (w // 2) - 30)
-
         # Debug output
 
-        DrawingUtil.print_progress(ui.screen, ui.alphabet_font, judge_info.typed_kana, judge_info.target_kana, 65, w / 2, 300)
-        DrawingUtil.print_progress(ui.screen, ui.full_font, judge_info.typed_roma, judge_info.target_roma, 55, w / 2, 330)
+        pygame.draw.rect(ui.screen, more_blackish(BACKGROUND_COLOR, 25), (0, 60,w, 130))
+        pygame.draw.rect(ui.screen, more_blackish(BACKGROUND_COLOR, 50), (0, 60, math.floor(progress.get_time_remain_ratio(pos) * w), 130))
 
-        # 60fps
-        pygame.time.wait(1000 // 60)
+        DrawingUtil.write_limit(ui.screen, (w - 2, 0), w / 2, ui.alphabet_font, score_data.properties["title"])
+        DrawingUtil.write_limit(ui.screen, (w - 5, 33), w / 2, ui.system_font,
+                                score_data.properties["song_author"] + "／" + score_data.properties["singer"],
+                                more_whiteish(TEXT_COLOR, 100))
+
+        DrawingUtil.print_progress(ui.screen, (w / 2, 80), MARGIN + 5, ui.get_font_by_size(50),
+                                   judge_info.typed_kana, judge_info.target_kana)
+        DrawingUtil.print_progress(ui.screen, (w / 2, 130), MARGIN + 5, ui.full_font,
+                                   judge_info.typed_roma, judge_info.target_roma)
+
+        pygame.draw.rect(ui.screen, GREEN_THICK_COLOR, (0, 187, w * judge_info.get_sentence_missrate(), 3))
+
+        fps_clock.tick(60)
         pygame.display.update()
 
     if game_finished_reason == "gameover":

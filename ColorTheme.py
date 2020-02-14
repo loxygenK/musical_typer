@@ -4,6 +4,7 @@ GREEN_THIN_COLOR = (178,255,89)
 BLUE_THICK_COLOR = (63,81,181)
 TEXT_COLOR = (56,56,62)
 
+MARGIN = 15
 
 def more_whiteish(base_color, delta):
     return tuple(min(x + delta, 255) for x in base_color)

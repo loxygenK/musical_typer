@@ -36,6 +36,8 @@ class Screen:
 
         self.drawer = list(filter(lambda x: x[1] < x[0], self.drawer))
 
+    def get_font_by_size(self, size):
+        return pygame.font.Font("mplus-1m-medium.ttf", size)
 
 
 class GameProgressInfo:
