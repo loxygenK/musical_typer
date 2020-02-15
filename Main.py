@@ -157,7 +157,10 @@ def main():
                         SoundEffectConstants.failed.play()
 
                         # エフェクト
-                        ui.add_bg_effector(15, DrawMethodTemplates.blink_screen, [(255, 200, 200)])
+
+                        ui.add_bg_effector(15, DrawMethodTemplates.blink_rect,
+                                           [(255, 200, 200), (0, 60, w, 130)])
+                        #ui.add_bg_effector(15, DrawMethodTemplates.blink_screen, [(255, 200, 200)])
                         ui.add_fg_effector(30, DrawMethodTemplates.slide_fadeout_text,
                                            ["WA", more_whiteish(RED_COLOR, 50), ui.alphabet_font,
                                                        10, -150, -383])
@@ -195,7 +198,7 @@ def main():
             # 曲が終わった?
             if game_info.song_finished:
                 # 歌詞情報を消去する
-                game_info.update_current_lyrics("", "", False)
+                game_info.update_current_lyrics("", "")
                 ui.add_bg_effector(60, DrawMethodTemplates.slide_fadeout_text,
                                    ["Song Finished!", (255, 127, 0), ui.system_font, 25, 0, 0])
 
@@ -241,7 +244,7 @@ def main():
         # ----- [ 前面レイヤー ] -----
 
         # 歌詞
-        DrawingUtil.print_progress(ui.screen, (w / 2, 80), MARGIN + 5, ui.get_font_by_size(50),
+        DrawingUtil.print_progress(ui.screen, (w / 2, 80), MARGIN + 5, ui.nihongo_font,
                                    game_info.typed_kana, game_info.target_kana)
         DrawingUtil.print_progress(ui.screen, (w / 2, 130), MARGIN + 5, ui.full_font,
                                    game_info.typed_roma, game_info.target_roma)
@@ -285,7 +288,7 @@ def main():
         pygame.draw.line(ui.screen, more_whiteish(TEXT_COLOR, 100), (0, 375), (w, 375), 2)
 
         # タイピング速度
-        ui.print_str(MARGIN, 382, ui.get_font_by_size(14), "タイピング速度", more_whiteish(TEXT_COLOR, 100))
+        ui.print_str(MARGIN, 382, ui.system_font, "タイピング速度", more_whiteish(TEXT_COLOR, 100))
         if game_info.get_key_per_second() > 4:
             color = more_blackish(RED_COLOR, 30 if frame_count % 10 < 5 else 0)
             pygame.draw.rect(ui.screen, color, (MARGIN, 400, w - MARGIN * 2, 20))
@@ -296,7 +299,7 @@ def main():
         DrawingUtil.write_center_x(ui.screen, w / 2, 398, ui.system_font, "{:4.2f} Char/sec".format(game_info.get_key_per_second()), TEXT_COLOR)
 
         # 正確率の数値情報
-        ui.print_str(MARGIN, 430, ui.get_font_by_size(14), "正確率の詳細", more_whiteish(TEXT_COLOR, 100))
+        ui.print_str(MARGIN, 430, ui.system_font, "正確率の詳細", more_whiteish(TEXT_COLOR, 100))
 
         pygame.draw.rect(ui.screen, more_blackish(RED_COLOR, 50),
                          (MARGIN + 10, 510, game_info.get_sentence_accuracy() * 175, 3))
@@ -317,15 +320,15 @@ def main():
                      tuple(x * game_info.get_full_accuracy() for x in RED_COLOR))
 
         # ランク
-        ui.print_str(MARGIN, 520, ui.get_font_by_size(14), "達成率", more_whiteish(TEXT_COLOR, 100))
-        ui.print_str(MARGIN + 10, 525, ui.get_font_by_size(48), "{:06.2f}%".format(game_info.get_rate() * 100), BLUE_THICK_COLOR)
+        ui.print_str(MARGIN, 520, ui.system_font, "達成率", more_whiteish(TEXT_COLOR, 100))
+        ui.print_str(MARGIN + 10, 525, ui.nihongo_font, "{:06.2f}%".format(game_info.get_rate() * 100), BLUE_THICK_COLOR)
 
-        ui.print_str(MARGIN + 260, 520, ui.get_font_by_size(14), "次のランクまで", more_whiteish(TEXT_COLOR, 100))
+        ui.print_str(MARGIN + 260, 520, ui.system_font, "次のランクまで", more_whiteish(TEXT_COLOR, 100))
         if game_info.calcutate_rank() > 0:
             acheive_rate = game_info.rank_standard[game_info.calcutate_rank() - 1] - game_info.get_rate() * 100
-            ui.print_str(MARGIN + 270, 525, ui.get_font_by_size(48), "{:06.2f}% ".format(acheive_rate), BLUE_THICK_COLOR)
+            ui.print_str(MARGIN + 270, 525, ui.nihongo_font, "{:06.2f}% ".format(acheive_rate), BLUE_THICK_COLOR)
         else:
-            ui.print_str(MARGIN + 270, 525, ui.get_font_by_size(48), "N/A", BLUE_THICK_COLOR)
+            ui.print_str(MARGIN + 270, 525, ui.nihongo_font, "N/A", BLUE_THICK_COLOR)
 
         # レイヤーが変わるのでここで前面エフェクトを更新する
         ui.update_fg_effector()
