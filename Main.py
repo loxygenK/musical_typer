@@ -175,6 +175,7 @@ def read_score(file_name):
 
     return score
 
+
 def main():
 
     score_data = read_score("test_music_text.tsc")
@@ -237,6 +238,8 @@ def main():
                     if judge_info.is_expected_key(chr(event.key)):
                         key_speeder.ticked(pos)
                         judge_info.count_success()
+                        judge_info.point += int(10 * key_speeder.get_key_per_second())
+
                         # Add some special score
                         ui.add_foreground_draw_method(30, DrawMethodTemplates.slide_fadeout_text,
                                                       ["Pass", more_blackish(GREEN_THIN_COLOR, 50), ui.alphabet_font, 10, -150, -383])
@@ -282,12 +285,14 @@ def main():
 
             # Before it let's add score
             judge_info.point += GameJudgementInfo.COULDNT_TYPE_POINT * len(judge_info.target_roma)
+            judge_info.standard_point += GameJudgementInfo.ONE_CHAR_POINT * len(judge_info.target_roma)
 
             # Then record
             judge_info.record_sentence_score()
 
             # Did player TLE?
             if len(judge_info.target_roma) > 0:
+                judge_info.standard_point += GameJudgementInfo.CLEAR_POINT + GameJudgementInfo.PERFECT_POINT
                 ui.add_foreground_draw_method(30, DrawMethodTemplates.slide_fadeout_text,
                                               ["TLE", more_blackish(RED_COLOR, 50), ui.alphabet_font, -10,
                                                -150, -383])
@@ -351,7 +356,7 @@ def main():
 
         ui.update_background_draw_method()
 
-        # [ Foreground ]
+        # ----- [ Foreground ] -----
 
         # Lyrics
         DrawingUtil.print_progress(ui.screen, (w / 2, 80), MARGIN + 5, ui.get_font_by_size(50),
@@ -361,7 +366,13 @@ def main():
 
         # mistake rate gauge
         pygame.draw.rect(ui.screen, GREEN_THICK_COLOR if not is_ac else RED_COLOR, (0, 60, w * judge_info.get_sentence_missrate(), 3))
-        pygame.draw.rect(ui.screen, GREEN_THICK_COLOR, (0, 187, w * judge_info.get_full_missrate(), 3))
+        DrawingUtil.write_limit(ui.screen, (w * judge_info.get_rate(limit=True), 168), 0, ui.system_font,
+                                judge_info.rank_string[judge_info.calcutate_rank()], more_whiteish(TEXT_COLOR, 100))
+
+        if judge_info.calcutate_rank() > 0:
+            acheive_rate = judge_info.rank_standard[judge_info.calcutate_rank() - 1] / 100
+            pygame.draw.rect(ui.screen, RED_COLOR, (0, 187, w * acheive_rate, 3))
+        pygame.draw.rect(ui.screen, GREEN_THICK_COLOR if judge_info.get_rate() < 0.8 else BLUE_THICK_COLOR, (0, 187, w * judge_info.get_rate(), 3))
 
         # keyboard
         keyboard_drawer.draw(ui.screen, 193, ui.full_font, 40, 5, judge_info.target_roma[:1], 2,
@@ -376,24 +387,26 @@ def main():
         else:
             ui.print_str(5, 20, ui.alphabet_font, "{:08d}".format(judge_info.point), BLUE_THICK_COLOR)
 
+
         # Realtime score area
         pygame.draw.line(ui.screen, more_whiteish(TEXT_COLOR, 100), (0, 375), (w, 375), 2)
 
         # Type Speed
         ui.print_str(MARGIN, 382, ui.get_font_by_size(14), "タイピング速度", more_whiteish(TEXT_COLOR, 100))
-        if key_speeder.get_key_per_second() > 2:
+        if key_speeder.get_key_per_second() > 4:
             color = more_blackish(RED_COLOR, 30 if frame_count % 10 < 5 else 0)
             pygame.draw.rect(ui.screen, color, (MARGIN, 400, w - MARGIN * 2, 20))
         else:
             pygame.draw.rect(ui.screen,               GREEN_THIN_COLOR     , (MARGIN, 400, w - MARGIN * 2, 20))
-            pygame.draw.rect(ui.screen, more_blackish(GREEN_THIN_COLOR, 50), (MARGIN, 400, key_speeder.get_key_per_second() / 5 * (w - MARGIN * 2), 20))
+            pygame.draw.rect(ui.screen, more_blackish(GREEN_THIN_COLOR, 50), (MARGIN, 400, key_speeder.get_key_per_second() / 4 * (w - MARGIN * 2), 20))
 
         DrawingUtil.write_center_x(ui.screen, w / 2, 398, ui.system_font, "{:4.2f} Char/sec".format(key_speeder.get_key_per_second()), TEXT_COLOR)
 
         # Accuracy Numeric Value
-        pygame.draw.rect(ui.screen, more_blackish(TEXT_COLOR, 50),
-                         (MARGIN + 10, 510, judge_info.get_sentence_missrate() * 175, 3))
         ui.print_str(MARGIN, 430, ui.get_font_by_size(14), "正確率の詳細", more_whiteish(TEXT_COLOR, 100))
+
+        pygame.draw.rect(ui.screen, more_blackish(RED_COLOR, 50),
+                         (MARGIN + 10, 510, judge_info.get_sentence_missrate() * 175, 3))
         ui.print_str(MARGIN + 10, 450, ui.system_font, "文単位", more_whiteish(TEXT_COLOR, 50))
         ui.print_str(MARGIN + 10, 460, ui.nihongo_font, "{:06.2f}%".format(judge_info.get_sentence_missrate() * 100),
                      tuple(x * judge_info.get_sentence_missrate() for x in RED_COLOR))
@@ -409,6 +422,17 @@ def main():
         ui.print_str(MARGIN + 400, 450, ui.system_font, "全体", more_whiteish(TEXT_COLOR, 50))
         ui.print_str(MARGIN + 400, 460, ui.nihongo_font, "{:06.2f}%".format(judge_info.get_full_missrate() * 100),
                      tuple(x * judge_info.get_full_missrate() for x in RED_COLOR))
+
+        # Rank
+        ui.print_str(MARGIN, 520, ui.get_font_by_size(14), "達成率", more_whiteish(TEXT_COLOR, 100))
+        ui.print_str(MARGIN + 10, 525, ui.get_font_by_size(48), "{:06.2f}%".format(judge_info.get_rate() * 100), BLUE_THICK_COLOR)
+
+        ui.print_str(MARGIN + 260, 520, ui.get_font_by_size(14), "次のランクまで", more_whiteish(TEXT_COLOR, 100))
+        if judge_info.calcutate_rank() > 0:
+            acheive_rate = judge_info.rank_standard[judge_info.calcutate_rank() - 1] - judge_info.get_rate() * 100
+            ui.print_str(MARGIN + 270, 525, ui.get_font_by_size(48), "{:06.2f}% ".format(acheive_rate), BLUE_THICK_COLOR)
+        else:
+            ui.print_str(MARGIN + 270, 525, ui.get_font_by_size(48), "N/A", BLUE_THICK_COLOR)
 
         ui.update_foreground_draw_method()
 

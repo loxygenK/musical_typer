@@ -260,6 +260,7 @@ class GameJudgementInfo:
         self.section_log = []
 
         self.point = 0
+        self.standard_point = 0
 
         self.completed = True
 
@@ -386,6 +387,8 @@ class GameJudgementInfo:
         self.sent_count += 1
         self.section_count += 1
 
+        self.standard_point += GameJudgementInfo.ONE_CHAR_POINT
+
         self.typed_roma += self.target_roma[:1]
         self.target_roma = self.target_roma[1:]
         self.target_kana = Romautil.get_not_halfway_hr(self.target_kana, self.target_roma)
@@ -394,6 +397,8 @@ class GameJudgementInfo:
             self.point += GameJudgementInfo.CLEAR_POINT
             if self.sent_miss == 0:
                 self.point += GameJudgementInfo.PERFECT_POINT
+
+            self.standard_point += GameJudgementInfo.CLEAR_POINT + GameJudgementInfo.PERFECT_POINT
             self.completed = True
 
             return True
@@ -457,6 +462,33 @@ class GameJudgementInfo:
                 return False
         else:
             return self.is_exactly_expected_key(code)
+
+    rank_standard = [200, 150, 125, 100, 99.50, 99, 98, 97, 94, 90, 80, 60, 40, 20, 10, 0]
+    rank_string = ["Wow", "Unexpected", "Very God", "God", "Pro", "Genius", "Geki-tsuyo", "tsuyotusyo", "AAA", "AA", "A", "B", "C", "D", "E", "F"]
+
+    def get_rate(self, accuracy=-1, limit=False):
+
+        if accuracy == -1: accuracy = self.get_full_missrate()
+
+        standard = (self.standard_point + self.count * 45)
+        score = self.point * accuracy
+
+        if score <= 0: return 0
+
+        if limit:
+            score = min(score, standard)
+
+        return score / standard
+
+
+    def calcutate_rank(self, accuracy=-1):
+
+        rate = self.get_rate(accuracy)
+
+        for i in range(1, len(self.rank_standard)):
+            if self.rank_standard[i] < rate * 100:
+                return i
+        return len(self.rank_standard) - 1
 
 
 class SEControl:
