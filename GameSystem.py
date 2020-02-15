@@ -1,7 +1,18 @@
+##############################
+#                            #
+#   loxygenK/musical_typer   #
+#   ゲームシステム           #
+#   (c)2020 loxygenK         #
+#      All right reversed.   #
+#                            #
+##############################
+
+import re
+
 import pygame
 import romkan
 
-import pygame_misc
+import DrawingUtil
 import Romautil
 
 
@@ -18,78 +29,227 @@ class Screen:
 
     def __init__(self):
         self.screen = pygame.display.set_mode((640, 853))
-        self.foreground_color = []
-        self.background_color = []
+        self.fg_effector = []
+        self.bg_effector = []
         pygame.display.set_caption("Musical Typer")
 
     @property
     def screen_size(self):
+        """
+        スクリーンのサイズを返す。
+        :return: (横幅, 縦幅)
+        """
         return pygame.display.get_surface().get_size()
 
     def print_str(self, x, y, font, text, color=(255, 255, 255)):
-        pygame_misc.print_str(self.screen, x, y, font, text, color)
-    
-    def add_foreground_draw_method(self, living_frame, draw_func, argument=None):
-        self.foreground_color.append([living_frame, 0, draw_func, argument])
-    
-    def add_background_draw_method(self, living_frame, draw_func, argument=None):
-        self.background_color.append([living_frame, 0, draw_func, argument])
-    
-    def update_foreground_draw_method(self):
-        for i in range(len(self.foreground_color)):
-            self.foreground_color[i][2](self.foreground_color[i][1], self.foreground_color[i][0], self, self.foreground_color[i][3])
-            self.foreground_color[i][1] += 1
+        """
+        ウィンドウに文字を描画する。
 
-        self.foreground_color = list(filter(lambda x: x[1] < x[0], self.foreground_color))
+        :param x: X座標
+        :param y: Y座標
+        :param font: 描画に使用するフォント
+        :param text: 描画する文字列
+        :param color: 描画する色
+        :return: なし
+        """
+        DrawingUtil.print_str(self.screen, x, y, font, text, color)
     
-    def update_background_draw_method(self):
-        for i in range(len(self.background_color)):
-            self.background_color[i][2](self.background_color[i][1], self.background_color[i][0], self, self.background_color[i][3])
-            self.background_color[i][1] += 1
+    def add_fg_effector(self, living_frame, draw_func, argument=None):
+        """
+        前面エフェクターを追加する。
+        :param living_frame: 生存時間
+        :param draw_func: 描画メソッド
+        :param argument: 描画メソッドに渡す引数
+        :return: なし
+        """
+        self.fg_effector.append([living_frame, 0, draw_func, argument])
+    
+    def add_bg_effector(self, living_frame, draw_func, argument=None):
+        """
+        背面エフェクターを追加する。
+        :param living_frame: 生存時間
+        :param draw_func: 描画メソッド
+        :param argument: 描画メソッドに渡す引数
+        :return: なし
+        """
+        self.bg_effector.append([living_frame, 0, draw_func, argument])
+    
+    def update_fg_effector(self):
+        """
+        前面エフェクターを更新する。
+        :return: なし
+        """
+        for i in range(len(self.fg_effector)):
+            self.fg_effector[i][2](self.fg_effector[i][1], self.fg_effector[i][0], self, self.fg_effector[i][3])
+            self.fg_effector[i][1] += 1
 
-        self.background_color = list(filter(lambda x: x[1] < x[0], self.background_color))
+        self.fg_effector = list(filter(lambda x: x[1] < x[0], self.fg_effector))
+    
+    def update_bg_effector(self):
+        """
+        背面エフェクターを更新する。
+        :return: なし
+        """
+        for i in range(len(self.bg_effector)):
+            self.bg_effector[i][2](self.bg_effector[i][1], self.bg_effector[i][0], self, self.bg_effector[i][3])
+            self.bg_effector[i][1] += 1
+
+        self.bg_effector = list(filter(lambda x: x[1] < x[0], self.bg_effector))
 
     def get_font_by_size(self, size):
+        """
+        フォントをサイズから取得する
+        :param size: サイズ
+        :return: フォント
+        """
         return pygame.font.Font("mplus-1m-medium.ttf", size)
 
-class GameProgressInfo:
+
+class GameInfo:
     """
-    ゲームの進行情報を保持するクラス。
+    ゲームの情報を統合して管理する。
     """
 
-    def __init__(self, score):
+    ONE_CHAR_POINT = 10
+    PERFECT_POINT = 100
+    SECTION_PERFECT_POINT = 300
+    SPECIAL_POINT = 50
+    CLEAR_POINT = 50
+    MISS_POINT = -30
+    COULDNT_TYPE_POINT = -2
 
+    rank_standard = [200, 150, 125, 100, 99.50, 99, 98, 97, 94, 90, 80, 60, 40, 20, 10, 0]
+    rank_string = ["Wow", "Unexpected", "Very God", "God", "Pro", "Genius", "Geki-tsuyo", "tsuyotusyo", "AAA", "AA", "A", "B", "C", "D", "E", "F"]
+
+    def __init__(self, score, key_length=100):
+
+        # 現在位置
+        self.pos = 0
+
+        # 現在の歌詞／ゾーン／セクションの番号
         self.lyrincs_index =  0
-        """今いる歌詞のインデックス。 get_current_lyrincsメソッドにより更新される"""
-
         self.zone_index = 0
-        """今いるゾーンのインデックス。 get_zone_lyrincsメソッドにより更新される"""
-
         self.section_index = 0
-        """今いるセクションのインデックス。 get_section_lyrincsメソッドにより更新される"""
 
+        # すべての歌詞／セクションが打ち終わったか
+        self.song_finished = False
+        self.section_finished = False
 
+        # ゾーン内にいるか
+        self.is_in_zone = False
+
+        # 譜面データ(点数じゃない)
         self.score = score
 
-    def next_lyrincs_incoming(self, pos):
-        """
-        与えられた時間において、次の歌詞が来ているか。
+        # 歌詞データ
+        self.target_roma = ""
+        self.target_kana = ""
+        self.full_kana = ""
+        self.typed_roma = ""
+        self.full = ""
 
-        :param pos: 現在の時間
-        :return: 次の歌詞が来ている場合にTrue
-        """
-        return self.score.score[self.lyrincs_index + 1][0] <= pos
+        # 曲を通してのカウント／ミス
+        self.count = 0
+        self.missed = 0
 
-    def next_zone_incoming(self, pos):
-        """
-        与えられた時間に置いて、次のゾーンが来ているか。
+        # 歌詞一文単位のカウント／ミス
+        self.sent_miss = 0
+        self.sent_count = 0
 
-        :param pos: 現在の時間
-        :return: 次のゾーンが来ている場合にTrue
-        """
-        return self.score.score[self.zone_index + 1][0] <= pos
+        # セクションごとのカウント／ミス
+        self.section_miss = 0
+        self.section_count = 0
 
-    def get_current_lyrincs(self, pos):
+        # リザルト
+        self.sentence_log = []
+        self.section_log = []
+
+        # 現在の点数
+        self.point = 0
+
+        # 理想の点数
+        self.standard_point = 0
+
+        # これ以上タイプをする必要がないか
+        self.completed = True
+
+        # キータイプログ
+        self.key_log = []
+        self.prev_time = 0
+        self.length = key_length
+
+    # ----- プロパティ -----
+
+    # *** タイプ情報 ***
+    @property
+    def typed_kana(self):
+        """
+        すでに打ったローマ字を取得する。
+
+        :return: すでに打ったローマ字
+        """
+        typed_index = self.full_kana.index(self.target_kana)
+
+        if len(self.target_kana) > 0:
+            return self.full_kana[:typed_index]
+        else:
+            return self.full_kana
+
+    @property
+    def typed(self):
+        """
+        打ったキーの合計。
+
+        :return: 打ったキーの合計
+        """
+        return self.count + self.missed
+
+    @property
+    def sent_typed(self):
+        """
+        文単位で打ったキーの数。
+        :return: 打ったキー数
+        """
+        return self.sent_count + self.sent_miss
+
+    @property
+    def section_typed(self):
+        """
+        セクション単位で打ったキーの数。
+        :return: 打ったキーの数
+        """
+        return self.section_count + self.section_miss
+
+    @property
+    def all_typed(self):
+        """
+        打ち終わったか(もともと歌詞がなかった場合はFalseを返す)
+        :return: 歌詞がなく、一文字以上打っている場合はTrue
+        """
+        return self.completed and self.sent_typed > 0
+
+    @property
+    def is_ac(self):
+        """
+        ACしたか
+
+        :return: GameInfo.all_typedを満たし、かつミス数が0で「ある」場合True
+        """
+        return self.completed and self.sent_typed > 0 and self.sent_miss == 0
+    
+    @property
+    def is_wa(self):
+        """
+        WAだったか
+
+        :return: GameInfo.all_typedを満たし、かつミス数が0で「ない」場合True
+        """
+        return self.completed and self.sent_typed > 0 and self.sent_miss > 0
+
+    # ----- メソッド -----
+
+    # *** 現在の位置から情報を求める ***
+    def update_current_lyrincs(self):
         """
         与えられた時間に置いて打つべき歌詞のデータを求める。
 
@@ -97,70 +257,47 @@ class GameProgressInfo:
         :return: データ, lyrincs_indexが変化したか
         """
 
-        # TODO: 処理を軽くする(キャッシュとか使って)
 
+        # 歌詞がない場合は無条件に終了する
         if len(self.score.score) == 0:
-            return None, False
+            self.song_finished = True
+            return False
 
+        # 一番最後の歌詞かどうか
         if self.lyrincs_index > len(self.score.score) - 1:
-            return self.score.score[len(self.score.score) - 1][1], False
+            # 一番最後からは変化しない
+            return False
         else:
-            if self.score.score[self.lyrincs_index + 1][0] > pos:
-                return self.score.score[self.lyrincs_index], False
+            # 現在の歌詞がすでに終わっているか(次の歌詞の開始時間を過ぎているか)
+            if self.score.score[self.lyrincs_index + 1][0] > self.pos:
+                return False
 
+        # 次の歌詞を探す
+        #             pos i
+        #              ↓ |
+        # ---|//(i-1)/////|-----(i)-----|---
+        #     └→ここが引っかかる
         for i in range(self.lyrincs_index, len(self.score.score)):
             if i < 0: continue
 
-            if self.score.score[i][0] >= pos:
+            # i番目の歌詞の開始時間がposを超えているか
+            if self.score.score[i][0] >= self.pos:
 
+                # 歌詞が変わっているか
                 is_lidx_changes = (i - 1) != self.lyrincs_index
                 if is_lidx_changes:
+
+                    # 更新する
                     self.lyrincs_index = i - 1
-                return self.score.score[i - 1], is_lidx_changes
 
-        return None, False
+                # 歌詞が変わっているかどうかを返す
+                return is_lidx_changes
 
-    def get_current_zone(self, pos):
-        """
-        与えられた時間が属するゾーンを求める。
+        # ヒットしなかった(歌詞が終了した)
+        self.song_finished = True
+        return False
 
-        :param pos: 現在の時間
-        :return: ゾーン名。ゾーンに属していない場合はNoneを返す
-        """
-        # TODO: 処理を軽くする(キャッシュとか使って)
-
-        if len(self.score.zone) == 0:
-            return None, False
-
-        if self.zone_index == len(self.score.zone) - 2:
-            if self.score.zone[self.zone_index + 1][0] > pos:
-                return self.score.zone[self.zone_index][1], False
-            else:
-                return None, False
-        else:
-            if self.score.zone[self.zone_index][0] <= pos < self.score.zone[self.zone_index + 1][0]:
-                return self.score.zone[self.zone_index][1], False
-
-        for i in range(self.zone_index, len(self.score.zone)):
-            if i < 0: continue
-
-            if self.score.zone[i][0] >= pos and self.score.zone[i][2] == "end":
-                if self.score.zone[i - 1][0] <= pos and self.score.zone[i - 1][2] == "start":
-
-                    is_lidx_changes = (i - 1) != self.zone_index
-                    if is_lidx_changes:
-                        self.zone_index = i - 1
-                    return self.score.zone[i - 1][1], is_lidx_changes
-                else:
-                    if self.zone_index != 0:
-                        self.zone_index = 0
-                        return None, True
-
-                    return None, False
-
-        return None, False
-
-    def get_current_section(self, pos):
+    def get_current_section(self):
         """
         与えられた時間に置いて打つべき歌詞のデータを求める。
 
@@ -169,26 +306,76 @@ class GameProgressInfo:
         """
 
         if len(self.score.section) == 0:
-            return None, False
+            self.section_finished = True
+            return False
 
         if self.section_index > len(self.score.section) - 1:
-            return self.score.section[len(self.score.section) - 1][1], False
+            return False
         else:
-            if self.score.zone[self.zone_index + 1][0] > pos:
-                return self.score.section[self.section_index][1], False
+            if self.score.zone[self.zone_index + 1][0] > self.pos:
+                return False
 
         for i in range(self.section_index, len(self.score.section)):
             if i < 0: continue
 
-            if self.score.section[i][0] >= pos:
+            if self.score.section[i][0] >= self.pos:
 
                 is_lidx_changes = (i - 1) != self.section_index
                 if is_lidx_changes:
                     self.section_index = i - 1
-                return self.score.section[i - 1][1], is_lidx_changes
+                return is_lidx_changes
 
-        return None, False
+        self.section_finished = True
+        return False
 
+    def update_current_zone(self):
+        """
+        与えられた時間が属するゾーンを求める。
+
+        :param pos: 現在の時間
+        :return: ゾーン名。ゾーンに属していない場合はNoneを返す
+        """
+
+        if len(self.score.zone) == 0:
+            self.is_in_zone = False
+            return False
+
+        if self.zone_index == len(self.score.zone) - 2:
+            if self.score.zone[self.zone_index + 1][0] > self.pos:
+                self.is_in_zone = True
+                return False
+            else:
+                self.is_in_zone = False
+                return False
+        else:
+            if self.score.zone[self.zone_index][0] <= self.pos < self.score.zone[self.zone_index + 1][0]:
+                return False
+
+        for i in range(self.zone_index, len(self.score.zone)):
+            if i < 0: continue
+
+            if self.score.zone[i][0] >= self.pos and self.score.zone[i][2] == "end":
+                if self.score.zone[i - 1][0] <= self.pos and self.score.zone[i - 1][2] == "start":
+
+                    is_lidx_changes = (i - 1) != self.zone_index
+                    if is_lidx_changes:
+                        self.zone_index = i - 1
+
+                    self.is_in_zone = True
+                    return is_lidx_changes
+                else:
+                    if self.zone_index != 0:
+                        self.zone_index = 0
+                        self.is_in_zone = False
+                        return True
+
+                    self.is_in_zone = False
+                    return False
+
+        self.is_in_zone = False
+        return False
+
+    # *** 残り時間情報 ***
     def get_sentence_full_time(self):
         """
         現在の歌詞が表示される時間を求める。
@@ -200,7 +387,7 @@ class GameProgressInfo:
 
         return next_sentence_time - this_sentence_time
 
-    def get_sentence_elasped_time(self, pos):
+    def get_sentence_elasped_time(self):
         """
         現在の歌詞が表示されてから経った時間を求める。
 
@@ -209,120 +396,47 @@ class GameProgressInfo:
         """
 
         next_sentence_time = self.score.score[self.lyrincs_index + 1][0]
-        return next_sentence_time - pos
+        return next_sentence_time - self.pos
 
-    def get_time_remain_ratio(self, pos):
+    def get_time_remain_ratio(self):
         """
         0～1で、どのくらい時間が経ったかを求める。
 
         :param pos: 現在時間
         :return: 経った時間を0～1で。
         """
-        return self.get_sentence_elasped_time(pos) / self.get_sentence_full_time()
+        return self.get_sentence_elasped_time() / self.get_sentence_full_time()
 
-
-class GameJudgementInfo:
-    """
-    スコアやタイプ成功回数／失敗回数を管理する。
-    """
-
-    ONE_CHAR_POINT = 10
-    PERFECT_POINT = 100
-    SECTION_PERFECT_POINT = 300
-    SPECIAL_POINT = 50
-    CLEAR_POINT = 50
-    MISS_POINT = -30
-    COULDNT_TYPE_POINT = -2
-
-    def __init__(self):
-
-        # --- Lyrics data
-        self.target_roma = ""
-        self.target_kana = ""
-        self.full_kana = ""
-        self.typed_roma = ""
-        self.full = ""
-
-        # --- Full count
-        self.count = 0
-        self.missed = 0
-
-        # --- Sentence count
-        self.sent_miss = 0
-        self.sent_count = 0
-
-        # --- Section count
-        self.section_miss = 0
-        self.section_count = 0
-
-        # --- Result log
-        self.sentence_log = []
-        self.section_log = []
-
-        self.point = 0
-        self.standard_point = 0
-
-        self.completed = True
-
-    @property
-    def typed_kana(self):
-        typed_index = self.full_kana.index(self.target_kana)
-
-        if len(self.target_kana) > 0:
-            return self.full_kana[:typed_index]
-        else:
-            return self.full_kana
-
-    @property
-    def typed(self):
-        return self.count + self.missed
-
-    @property
-    def sent_typed(self):
-        return self.sent_count + self.sent_miss
-
-    @property
-    def section_typed(self):
-        return self.section_count + self.section_miss
-
-    def calc_missrate(self, count, miss):
+    # *** ミス率 ****
+    def calc_accuracy(self, count, miss):
         trying_sumup = count + miss
 
-        # To prevent ZeroDivision
+        # ZeroDivisionを防ぐ
         if trying_sumup == 0:
             trying_sumup = 1
 
         return count / trying_sumup
 
-    def get_full_missrate(self):
+    def get_full_accuracy(self):
         """
         全体での成功比率を求める。
         成功回数+失敗回数が0の場合は、成功回数を返す。(つまり0になる)
 
         :return: 成功比率（成功回数/(成功回数+失敗回数)）
         """
-        return self.calc_missrate(self.count, self.missed)
+        return self.calc_accuracy(self.count, self.missed)
 
-    def get_sentence_missrate(self, count=-1, miss=-1):
+    def get_sentence_accuracy(self):
         """
         歌詞ごとの成功比率を求める。
         成功回数+失敗回数が0の場合は、成功回数を返す。(つまり0になる)
         :return: 成功比率（成功回数/(成功回数+失敗回数)）
         """
 
-        return self.calc_missrate(self.sent_count, self.sent_miss)
+        return self.calc_accuracy(self.sent_count, self.sent_miss)
 
-
-    def get_section_missrate(self, count=-1, miss=-1):
-        """
-        セクションごとの成功比率を求める。
-        成功回数+失敗回数が0の場合は、成功回数を返す。(つまり0になる)
-        :return: 成功比率（成功回数/(成功回数+失敗回数)）
-        """
-
-        return self.calc_missrate(self.section_count, self.section_miss)
-
-    def set_current_lyrinc(self, full, kana):
+    # *** 歌詞情報アップデート ***
+    def update_current_lyrics(self, full=None, kana=None, count_tle=True):
         """
         現在打つべき歌詞を設定する。kanaのローマ字変換結果が0文字だった場合は、self.completed はFalseになる。
 
@@ -331,6 +445,14 @@ class GameJudgementInfo:
         :return: なし
         """
 
+        self.reset_sentence_condition(count_tle)
+
+        if full is None:
+            full = self.score.score[self.lyrincs_index][1]
+
+        if kana is None:
+            kana = self.score.score[self.lyrincs_index][2]
+
         self.full = full
         self.target_kana = kana
         self.full_kana = kana
@@ -338,6 +460,15 @@ class GameJudgementInfo:
 
         if len(self.target_roma) == 0:
             self.completed = True
+
+    def get_section_missrate(self):
+        """
+        セクションごとの成功比率を求める。
+        成功回数+失敗回数が0の場合は、成功回数を返す。(つまり0になる)
+        :return: 成功比率（成功回数/(成功回数+失敗回数)）
+        """
+
+        return self.calc_accuracy(self.section_count, self.section_miss)
 
     def record_sentence_score(self):
         """
@@ -355,13 +486,20 @@ class GameJudgementInfo:
         """
         self.section_log.append([self.section_count, self.section_miss])
 
-    def reset_sentence_score(self):
+    def reset_sentence_condition(self, count_tle=True):
         """
         歌詞ごとの進捗情報を消去する。
 
+        :param count_tle: TLEを処理する
         :return: なし
         """
-        self.sent_count= 0
+        
+        if count_tle:
+            self.point += GameInfo.COULDNT_TYPE_POINT * len(self.target_roma)
+            self.standard_point += GameInfo.ONE_CHAR_POINT * len(self.target_roma)
+            self.standard_point += GameInfo.CLEAR_POINT + GameInfo.PERFECT_POINT
+        
+        self.sent_count = 0
         self.sent_miss = 0
         self.typed_roma = ""
         self.completed = False
@@ -378,31 +516,46 @@ class GameJudgementInfo:
     def count_success(self):
         """
         タイプ成功をカウントする。
-
-        :return: このカウントで完了した場合にはTrue、していない場合にはFalse。
         """
 
+        # キータイプをカウント
+        self.keytype_tick()
+
+        # スコア／理想スコアをカウントする
         self.count += 1
-        self.point += GameJudgementInfo.ONE_CHAR_POINT
         self.sent_count += 1
         self.section_count += 1
 
-        self.standard_point += GameJudgementInfo.ONE_CHAR_POINT
+        self.point += GameInfo.ONE_CHAR_POINT
+        self.point += int(10 * self.get_key_per_second())
 
+        self.standard_point += GameInfo.ONE_CHAR_POINT
+
+        # tech-zone ゾーン内にいるか
+        if self.score.zone[self.zone_index][1] == "tech-zone":
+            self.point += self.SPECIAL_POINT
+
+        # 歌詞情報を更新する
         self.typed_roma += self.target_roma[:1]
         self.target_roma = self.target_roma[1:]
+
+        # 打つべきかなを取得する
         self.target_kana = Romautil.get_not_halfway_hr(self.target_kana, self.target_roma)
 
+        # これ以上打つ必要がないか
         if len(self.target_roma) == 0:
-            self.point += GameJudgementInfo.CLEAR_POINT
-            if self.sent_miss == 0:
-                self.point += GameJudgementInfo.PERFECT_POINT
 
-            self.standard_point += GameJudgementInfo.CLEAR_POINT + GameJudgementInfo.PERFECT_POINT
+            # クリアポイントを付与
+            self.point += GameInfo.CLEAR_POINT
+
+            # ポイントを更新
+            self.standard_point += GameInfo.CLEAR_POINT + GameInfo.PERFECT_POINT
+
+            if self.sent_miss == 0:
+                self.point += GameInfo.PERFECT_POINT
+
             self.completed = True
 
-            return True
-        return False
 
     def count_failure(self):
         """
@@ -413,7 +566,7 @@ class GameJudgementInfo:
         self.missed += 1
         self.sent_miss += 1
         self.section_miss += 1
-        self.point += GameJudgementInfo.MISS_POINT
+        self.point += GameInfo.MISS_POINT
 
     def is_exactly_expected_key(self, code):
         """
@@ -429,7 +582,6 @@ class GameJudgementInfo:
             return False
 
         return self.target_roma[0] == code
-
 
     def is_expected_key(self, code):
         """
@@ -463,12 +615,16 @@ class GameJudgementInfo:
         else:
             return self.is_exactly_expected_key(code)
 
-    rank_standard = [200, 150, 125, 100, 99.50, 99, 98, 97, 94, 90, 80, 60, 40, 20, 10, 0]
-    rank_string = ["Wow", "Unexpected", "Very God", "God", "Pro", "Genius", "Geki-tsuyo", "tsuyotusyo", "AAA", "AA", "A", "B", "C", "D", "E", "F"]
-
     def get_rate(self, accuracy=-1, limit=False):
+        """
+        達成率を計算する
 
-        if accuracy == -1: accuracy = self.get_full_missrate()
+        :param accuracy: 計算に使用する達成率情報。省略すると全体の達成率を使用する
+        :param limit: 100%を超えないようにするか
+        :return: 達成率
+        """
+
+        if accuracy == -1: accuracy = self.get_full_accuracy()
 
         standard = (self.standard_point + self.count * 45)
         score = self.point * accuracy
@@ -480,8 +636,13 @@ class GameJudgementInfo:
 
         return score / standard
 
-
     def calcutate_rank(self, accuracy=-1):
+        """
+        達成率からランクのIDを取得する
+
+        :param accuracy: 計算に使用する達成率。
+        :return: ランクのID
+        """
 
         rate = self.get_rate(accuracy)
 
@@ -490,8 +651,59 @@ class GameJudgementInfo:
                 return i
         return len(self.rank_standard) - 1
 
+    def keytype_tick(self):
+        """
+        キータイプを記録する。
+        :return: なし
+        """
 
-class SEControl:
+        if self.prev_time == 0:
+            self.prev_time = self.pos
+            return
+
+        self.key_log.append(self.pos - self.prev_time)
+        self.prev_time = self.pos
+
+        if len(self.key_log) > self.length:
+            del self.key_log[0]
+
+    def override_key_prev_pos(self, pos=-1):
+        """
+        前回のキータイプ時間を指定した時間で上書きする。
+
+        :param pos: 上書きするキータイプ時間。省略すると現在の時間になる。
+        :return: なし
+        """
+        self.prev_time = pos if pos != -1 else self.pos
+
+
+    def get_key_type_average(self):
+        """
+        1つのキータイプに要する平均時間を求める
+        :return: キータイプ時間
+        """
+        if len(self.key_log) == 0:
+            return 0
+
+        return sum(self.key_log) / len(self.key_log)
+
+    def get_key_per_second(self):
+        """
+        一秒ごとにタイプするキーを求める。
+
+        :return: [key/sec]
+        """
+        # TODO: 計算が違っていた!!!!!!!!!!11 とりあえず2で割ってるけど、ひらがな1一文字分でカウントさせること！
+        if len(self.key_log) == 0:
+            return 0
+
+        return 1 / self.get_key_type_average() / 2
+
+
+class SoundEffectConstants:
+    """
+    効果音ファイルの集合体。
+    """
     success = pygame.mixer.Sound("ses/success.wav")
     special_success = pygame.mixer.Sound("ses/special.wav")
     failed = pygame.mixer.Sound("ses/failed.wav")
@@ -502,37 +714,216 @@ class SEControl:
     fast = pygame.mixer.Sound("ses/fast.wav")
     tle = pygame.mixer.Sound("ses/tle.wav")
 
-class KeySpeedCalculator:
-    def __init__(self, length=30):
-        self.key_log = []
-        self.prev_time = 0
-        self.length = length
 
-    def ticked(self, pos):
+class Score:
+    """
+    譜面データ。
+    """
+    LOG_ERROR = 1
+    LOG_WARN = 2
 
-        if self.prev_time == 0:
-            self.prev_time = pos
-            return
+    def __init__(self):
+        self.properties = {}
+        self.log = []
+        self.score = []
+        self.zone = []
+        self.section = []
 
-        self.key_log.append(pos - self.prev_time)
-        self.prev_time = pos
+    def log_error(self, line, text, init=True):
+        """
+        エラーログを記録し、データを削除する。
+        :param line: ログを出力するときの行。
+        :param text: ログ内容。
+        :param init: データを削除するか(デフォルト: True)
+        :return: なし
+        """
+        self.log.append([Score.LOG_ERROR, [line, text]])
+        if init: self.re_initialize_except_log()
 
-        if len(self.key_log) > self.length:
-            del self.key_log[0]
+    def log_warn(self, line, text):
+        """
+        警告ログを記録する。
+        :param line: ログを出力するときの行。
+        :param text: ログ内容。
+        :return: なし
+        """
+        self.log.append([Score.LOG_WARN, [line, text]])
 
-    def set_prev_pos(self, pos):
-        self.prev_time = pos
+    def re_initialize_except_log(self):
+        """
+        ログ以外を再初期化する。
+        :return: なし
+        """
+        self.properties = {}
+        self.score = []
+        self.zone = []
+        self.section = []
+
+    def read_score(self, file_name):
+        """
+        ファイルから譜面データを読み込み、このインスタンスに値をセットする。
+        :param file_name: 譜面データの入ったファイル
+        :return: なし(このメソッドは破壊性である)
+        """
+
+        # ----- [ 下準備 ] -----
+
+        # 便利なやつ
+        re_rect_blacket = re.compile(r"\[(.*)\]")
+
+        # ファイルを読み込む
+        lines = []
+        with open(file_name, mode="r") as f:
+            lines = f.readlines()
+
+        # ----- [ パース ] -----
+
+        current_minute = 0
+        current_time = 0
+
+        song = ""
+        phon = ""
+
+        is_in_song = False
+
+        for line in lines:
+
+            line = line.strip()
+
+            # ----- 処理対象行かの確認
+
+            # コメント
+            if line.startswith("#"): continue
+
+            # 空行
+            if len(line) == 0: continue
+
+            # カギカッコ
+            rect_blk_match = re_rect_blacket.match(line)
+
+            # ----- 曲外での処理
+
+            if not is_in_song:
+
+                # 曲に関するプロパティ
+                if line.startswith(":") and not is_in_song:
+                    line = line[1:]
+                    key, value = line.split()
+                    set_val_to_dictionary(self.properties, key, value)
+                    continue
+
+                if rect_blk_match is not None:
+                    command = rect_blk_match[1]
+
+                    # 曲開始コマンド?
+                    if command == "start":
+                        is_in_song = True
+                        continue
+                    # 曲終了コマンド?
+                    elif command == "end":
+                        self.score.append([current_time, "end", ""])
+                        is_in_song = False
+                        continue
+
+                # 上記の条件にヒットしない文字列は、
+                # 曲データの外では許可されない
+                self.log_error(line, "Unknown text outside song section!")
+                self.re_initialize_except_log()
+                break
+
+            # ----- 曲外での処理
+
+            # カギカッコで囲まれているか
+            if rect_blk_match is not None:
+                command = rect_blk_match[1]
+                # 間奏などで歌詞データがない
+                if command == "break":
+                    self.score.append([current_time, "", ""])
+                    continue
+
+            # 歌詞のみ(キャプションなど)
+            if line.startswith(">>"):
+                self.score.append([current_time, "", line[2:]])
+                continue
+
+            # 分指定演算子
+            if line.startswith("|"):
+                line = line[1:]
+                current_minute = int(line)
+                continue
+
+            # 秒指定演算子
+            # 秒指定演算子で、現在時間の更新と一緒に歌詞データの書き込みも実施する
+            if line.startswith("*"):
+                line = line[1:]
+
+                # 歌詞データが提供されているのにも関わらず、ふりがなデータがない
+                if len(song) != 0 and len(phon) == 0:
+                    # これはダメで、エラーを吐く
+                    self.log_error(line, "No pronunciation data!")
+                    break
+
+                # 歌詞を書き込む
+                self.score.append([current_time, song, phon])
+
+                # リセットする
+                song = ""
+                phon = ""
+
+                # 現在時間をセットする
+                current_time = 60 * current_minute + float(line)
+                continue
+
+            # セクション演算子
+            if line.startswith("@"):
+                line = line[1:]
+                self.section.append([current_time, line])
+                continue
+
+            # ゾーン演算子
+            if line.startswith("!"):
+                line = line[1:]
+                flag, zone_name = line.split()
+
+                # ゾーンが始まる
+                if flag == "start":
+                    self.zone.append([current_time, zone_name, "start"])
+                    continue
+                # ゾーンが終わる
+                elif flag == "end":
+                    self.zone.append([current_time, zone_name, "end"])
+                    continue
+
+            # ふりがなデータ
+            if line.startswith(":"):
+                phon += line[1:]
+                continue
+
+            # 特に何もなければそれは歌詞
+            song += line
+
+        # 読み込み終わり
+
+        # 曲のwaveファイルが定義されているか
+        if "song_data" not in self.properties.keys():
+            # それはダメ
+            self.log_error("[Loading song failed]", "No song specified!")
+        else:
+            # 読み込む
+            pygame.mixer.music.load(self.properties["song_data"])
 
 
-    def get_average(self):
-        if len(self.key_log) == 0:
-            return 0
+def set_val_to_dictionary(dict, key, value):
+    """
+    キーの有無に関わらず辞書にデータを書き込む。
+    キーが辞書に無かった場合は追加し、すでにある場合は更新する。
 
-        return sum(self.key_log) / len(self.key_log)
-
-    def get_key_per_second(self):
-        # TODO: Incorrect calculation! This is temporaly divided by 2
-        if len(self.key_log) == 0:
-            return 0
-
-        return 1 / self.get_average() / 2
+    :param dict: 辞書
+    :param key: キー
+    :param value: 値
+    :return:
+    """
+    if key in dict.keys():
+        dict[key] = value
+    else:
+        dict.setdefault(key, value)

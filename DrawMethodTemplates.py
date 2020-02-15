@@ -1,14 +1,23 @@
+##################################
+#                                #
+#   loxygenK/musical_typer       #
+#   エフェクターメソッド         #
+#   (c)2020 loxygenK             #
+#      All right reversed.       #
+#                                #
+##################################
 import pygame
+
 from GameSystem import Screen
 
-from ColorTheme import *
 
 def slide_fadeout_text(current_frame, total_frame, ui: Screen, args):
+    """
+    スライドして消えていく文字を描画する。
+    """
     w, h = ui.screen_size
 
     color = args[1] + (255 * (current_frame / total_frame),)
-
-    # I don't use ui.print_str, because I wanna know the size of font surface size.
 
     text = args[2].render(args[0], True, color)
     text_w, text_h = text.get_size()
@@ -16,7 +25,9 @@ def slide_fadeout_text(current_frame, total_frame, ui: Screen, args):
     ui.print_str((w - text_w) / 2 + args[4], (h - text_h) / 2 + args[5] - args[3] * (current_frame / total_frame), args[2], args[0], color)
 
 def blink_screen(current_frame, total_frame, ui: Screen, args):
-    w, h = ui.screen_size
+    """
+    画面を一回点滅させる。
+    """
 
     color = args[0] + (255 - 255 * (current_frame / total_frame),)
 
@@ -30,7 +41,9 @@ def blink_screen(current_frame, total_frame, ui: Screen, args):
 
 
 def blink_rect(current_frame, total_frame, ui: Screen, args):
-    w, h = ui.screen_size
+    """
+    画面の指定した領域を一回点滅させる。
+    """
 
     color = args[0] + (255 - 255 * (current_frame / total_frame),)
 
@@ -45,8 +58,15 @@ def blink_rect(current_frame, total_frame, ui: Screen, args):
     ui.screen.blit(filler, (args[1][0], args[1][1]))
 
 def print_text(current_frame, total_frame, ui: Screen, args):
+    """
+    画面に文字列を表示する。
+    """
+
     ui.print_str(args[0], args[1], args[2], args[3], args[4])
 
-
 def faded_text(current_frame, total_frame, ui: Screen, args):
+    """
+    指定した位置から動かずにフェードアウトしていく文字列を表示する。
+    """
+
     ui.print_str(args[0], args[1], args[2], args[3], (*args[4], 255 * (current_frame / total_frame)))

@@ -1,20 +1,71 @@
 import pygame
 from PIL import Image, ImageDraw
 from math import tan, radians
+
 from ColorTheme import *
 
-import time
 
+##############################
+#                            #
+#   loxygenK/musical_typer   #
+#   描画関係ユーティリティ   #
+#   (c)2020 loxygenK         #
+#      All right reversed.   #
+#                            #
+##############################
 
 class KeyboardDrawer:
-    # Drawing keyboard
+    """
+    キーボード描画クラス
+    """
     keyboard = ["1234567890-\\^", "qwertyuiop@[", "asdfghjkl;:]", "zxcvbnm,./\\"]
     highlight_text = "fj"
 
-    def __init__(self):
+    def __init__(self, screen, start_y, font, key_size, key_margin, width = 1, background_color = None):
+        """
+        キーボード描画クラスを初期化する。
+        
+        :param screen: 描画対象ウィンドウ
+        :param start_y: 描画開始Y
+        :param font: キー文字に使用するフォント
+        :param key_size: 一つ一つのキーの大きさ
+        :param key_margin: キーの間の余白
+        :param width: キーの枠
+        :param background_color: キーの背景色
+        """
+        self.screen = screen
+        self.start_y = start_y
+        self.font = font
+        self.key_size = key_size
+        self.key_margin = key_margin
+        self.width = width
+        self.background_color = background_color
         pass
 
-    def draw(self, screen, start_y, font, key_size, key_margin, highlight = "", width = 1, background_color = None):
+    def draw(self, highlight="", *, screen=None, start_y=-1, font=None, key_size=-1, key_margin=-1, width=-1, background_color=(-1, -1, -1)):
+        """
+        キーボードに描画を行う。
+        
+        :param highlight: ハイライト対象のキー
+        :param screen: [略]描画対象ウィンドウ
+        :param start_y: [略]描画開始Y
+        :param font: [略]キー文字に使用するフォント
+        :param key_size: [略]一つ一つのキーの大きさ
+        :param key_margin: [略]キーの間の余白
+        :param width: [略]キーの枠
+        :param background_color: [略]キーの背景色
+        :return: なし
+        """
+
+        # フィールドから継承する値を取得する
+        if screen           is None:         screen = self.screen
+        if start_y          is -1:           start_y = self.start_y
+        if font             is None:         font = self.font
+        if key_size         is -1:           key_size = self.key_size
+        if key_margin       is -1:           key_margin = self.key_margin
+        if width            is -1:           width = self.width
+        if background_color is (-1, -1, -1): background_color = self.background_color
+
         w, h = pygame.display.get_surface().get_size()
         size = key_size + key_margin
         for i in range(4):
@@ -41,26 +92,31 @@ class KeyboardDrawer:
                 chr = font.render(key[j].upper(), True, color)
                 screen.blit(chr, (start + size * j + key_size // 2 - chr.get_width() // 2, start_y + size * i + key_size // 2 - chr.get_height() // 2))
 
+
 @DeprecationWarning
 def arc(surface, color, pos, radius, start_angle, stop_angle, width = 1):
+    """
+    弧を描画する。めちゃくちゃ重いので使わないほうがいい。
+
+    :param surface: 描画先Surface
+    :param color: 色
+    :param pos: 中心位置
+    :param radius: 半径
+    :param start_angle: 開始角
+    :param stop_angle: 終了角
+    :param width: 枠の太さ
+    :return: なし
+    """
 
     lu = (pos[0] - radius, int(pos[1] + tan(radians(135)) * radius))
     rd = (pos[0] + radius, int(pos[1] - tan(radians(-45)) * radius))
 
-    rect = (*lu, *rd)
-
-
-
-    # 0.9ms
     im = Image.new("RGBA", (rd[0] - lu[0] + 1, rd[1] - lu[1]))
     draw = ImageDraw.Draw(im, "RGBA")
 
     draw.arc((0, 0, rd[0] - lu[0], rd[1] - lu[1]), start_angle, stop_angle, fill=color, width=5)
     byte = im.tobytes("raw")
-    start = time.time()
     pyg_im = pygame.image.fromstring(byte, im.size, "RGBA")
-    print(time.time() - start)
-
 
     surface.blit(pyg_im, lu)
 
@@ -110,6 +166,40 @@ def print_progress(screen, pos, left_limit, font, typed, remain, past_color=None
 
 
 def write_center_x(window, x, y, font, text, color=(255, 255, 255)):
+    """
+    中央揃えで文字列を描画する。
+
+    :param window: 描画先ウィンドウ
+    :param x: 基準X
+    :param y: Y
+    :param font: 描画に使用するフォント
+    :param text: 描画する文字列
+    :param color: 描画する文字列の色
+    :return: なし
+    """
 
     rect = font.render(text, True, color)
     window.blit(rect, (x - rect.get_width() / 2, y))
+
+
+def print_str(window, x, y, font, text, color=(255, 255, 255)):
+    """
+    画面に文字列を描画する。
+
+    :param window: 描画先ウィンドウ
+    :param x: 基準X
+    :param y: Y
+    :param font: 描画に使用するフォント
+    :param text: 描画する文字列
+    :param color: 描画する文字列の色
+    :return: なし
+    """
+    rect = font.render(text, True, color)
+    if len(color) == 4:
+        alpha_info = pygame.Surface(rect.get_size(), pygame.SRCALPHA)
+        alpha_info.fill((255, 255, 255, 255 - color[3]))
+        surf = rect.copy()
+        surf.blit(alpha_info, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
+        window.blit(surf, (x, y))
+    else:
+        window.blit(rect, (x, y))
