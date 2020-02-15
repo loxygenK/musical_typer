@@ -45,6 +45,9 @@ def hira2roma(str) -> str:
     # e.g.)なんのこと   -> nan’nokoto
     target_roma = re.sub("(.)\'", "\\1\\1", target_roma)
 
+    # ふが絶対に「fu」で返ってきてしまう。
+    target_roma = target_roma.replace("fu", "hu")
+
     return target_roma
 
 
@@ -59,7 +62,7 @@ def get_not_halfway_hr(full_hiragana, progress_roma):
     if len(progress_roma) == 0: return ""
     romaji = hira2roma(full_hiragana)
 
-    index = romaji.find(progress_roma)
+    index = romaji.rfind(progress_roma)
 
     if re.match("[aeiouyn]", romaji[index]) and romkan.is_consonant(romaji[index - 1]):
         if len(romaji) >= 2 and romkan.is_consonant(romaji[index - 2]):

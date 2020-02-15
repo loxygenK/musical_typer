@@ -188,7 +188,7 @@ class GameInfo:
 
         :return: すでに打ったローマ字
         """
-        typed_index = self.full_kana.index(self.target_kana)
+        typed_index = self.full_kana.rindex(self.target_kana)
 
         if len(self.target_kana) > 0:
             return self.full_kana[:typed_index]
@@ -614,16 +614,20 @@ class GameInfo:
             first_character = self.target_kana[:1]
             kunrei = romkan.to_kunrei(first_character)
             hepburn = romkan.to_hepburn(first_character)
+            optimized = Romautil.hira2roma(first_character)
 
             if kunrei[0] == "x":
                 return self.is_exactly_expected_key(code)
-
             if kunrei[0] == code:
                 print("Kunrei, approve.")
                 return True
             elif hepburn[0] == code:
                 print("Hepburn, approve.")
                 self.target_roma = hepburn + self.target_roma[len(kunrei):]
+                return True
+            elif optimized[0] == code:
+                print("Optimized, approve.")
+                self.target_roma = optimized + self.target_roma[len(kunrei):]
                 return True
             else:
                 print("kunrei nor hepburn, deny.")
@@ -858,7 +862,7 @@ class Score:
 
             # 歌詞のみ(キャプションなど)
             if line.startswith(">>"):
-                self.score.append([current_time, "", line[2:]])
+                self.score.append([current_time, line[2:], ""])
                 continue
 
             # 分指定演算子
@@ -873,13 +877,13 @@ class Score:
                 line = line[1:]
 
                 # 歌詞データが提供されているのにも関わらず、ふりがなデータがない
-                if len(song) != 0 and len(phon) == 0:
-                    # これはダメで、エラーを吐く
-                    self.log_error(line, "No pronunciation data!")
-                    break
-
-                # 歌詞を書き込む
-                self.score.append([current_time, song, phon])
+                if len(song) != 0:
+                    if len(phon) == 0:
+                        # これはダメで、エラーを吐く
+                        self.log_error(line, "No pronunciation data!")
+                        break
+                    else:
+                        self.score.append([current_time, song, phon])
 
                 # リセットする
                 song = ""
@@ -918,6 +922,7 @@ class Score:
             song += line
 
         # 読み込み終わり
+        self.score.insert(0, [0, "", ""])
 
         # 曲のwaveファイルが定義されているか
         if "song_data" not in self.properties.keys():
