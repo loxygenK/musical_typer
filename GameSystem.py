@@ -8,6 +8,7 @@
 ##############################
 
 import re
+import random
 
 import pygame
 import romkan
@@ -29,8 +30,8 @@ class Screen:
 
     def __init__(self):
         self.screen = pygame.display.set_mode((640, 853))
-        self.fg_effector = []
-        self.bg_effector = []
+        self.fg_effector: dict = {}
+        self.bg_effector: dict = {}
         pygame.display.set_caption("Musical Typer")
 
     @property
@@ -62,7 +63,14 @@ class Screen:
         :param argument: 描画メソッドに渡す引数
         :return: なし
         """
-        self.fg_effector.append([living_frame, 0, draw_func, argument])
+
+        # if draw_func.__name__ in self.fg_effector.keys() は遅い:/
+        try:
+            del self.fg_effector[draw_func.__name__]
+        except:
+            pass
+
+        self.fg_effector.setdefault(draw_func.__name__, [living_frame, 0, draw_func, argument])
     
     def add_bg_effector(self, living_frame, draw_func, argument=None):
         """
@@ -72,33 +80,49 @@ class Screen:
         :param argument: 描画メソッドに渡す引数
         :return: なし
         """
-        self.bg_effector.append([living_frame, 0, draw_func, argument])
-    
+
+        # if draw_func.__name__ in self.fg_effector.keys() は遅い:/
+        try:
+            del self.bg_effector[draw_func.__name__]
+        except:
+            pass
+
+        self.bg_effector.setdefault(draw_func.__name__, [living_frame, 0, draw_func, argument])
+
     def update_fg_effector(self):
         """
         前面エフェクターを更新する。
         :return: なし
         """
-        for i in range(len(self.fg_effector)):
-            self.fg_effector[i][2](self.fg_effector[i][1], self.fg_effector[i][0], self, self.fg_effector[i][3])
-            self.fg_effector[i][1] += 1
 
-        self.fg_effector = list(filter(lambda x: x[1] < x[0], self.fg_effector))
+        key_list = list(self.fg_effector.keys())
+        for k in key_list:
+            self.fg_effector[k][2](self.fg_effector[k][1], self.fg_effector[k][0], self, self.fg_effector[k][3])
+            self.fg_effector[k][1] += 1
+
+            if self.fg_effector[k][1] > self.fg_effector[k][0]:
+                del self.fg_effector[k]
     
     def update_bg_effector(self):
         """
         背面エフェクターを更新する。
         :return: なし
         """
-        for i in range(len(self.bg_effector)):
-            self.bg_effector[i][2](self.bg_effector[i][1], self.bg_effector[i][0], self, self.bg_effector[i][3])
-            self.bg_effector[i][1] += 1
 
-        self.bg_effector = list(filter(lambda x: x[1] < x[0], self.bg_effector))
+        key_list = list(self.bg_effector.keys())
+        for k in key_list:
+            self.bg_effector[k][2](self.bg_effector[k][1], self.bg_effector[k][0], self, self.bg_effector[k][3])
+            self.bg_effector[k][1] += 1
 
+            if self.bg_effector[k][1] > self.bg_effector[k][0]:
+                del self.bg_effector[k]
+
+    @DeprecationWarning
     def get_font_by_size(self, size):
         """
-        フォントをサイズから取得する
+        フォントをサイズから取得する。なんかそれなりに重いので使わんほうがいい
+        使うなら何回も呼び出すんじゃなくて変数に入れるとかしよう
+
         :param size: サイズ
         :return: フォント
         """
