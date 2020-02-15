@@ -53,6 +53,10 @@ def main():
     # スクリーンのサイズを取得
     w, h = ui.screen_size
 
+    # 次の歌詞を表示するモードに居るか
+    is_tmp_next_lyrics_printing = False
+    is_cont_next_lyrics_printing = False
+
     # ----- [ ゲーム準備 ] -----
 
     # 再生
@@ -89,12 +93,22 @@ def main():
             if event.type == QUIT:
                 mainloop_continues = False
                 break
+            if event.type == KEYUP:
+                if event.key == K_SPACE:
+                    is_tmp_next_lyrics_printing = False
+
             if event.type == KEYDOWN:
 
                 # ESCキーの場合
                 if event.key == K_ESCAPE:
                     mainloop_continues = False
                     break
+
+                if event.key == K_SPACE:
+                    is_tmp_next_lyrics_printing = True
+
+                if event.key == K_LSHIFT or event.key == K_RSHIFT:
+                    is_cont_next_lyrics_printing = not is_cont_next_lyrics_printing
 
                 # 大前提として、無効なキーが押されていないか
                 if Romautil.is_readable_key_pressed(event.key):
@@ -231,6 +245,7 @@ def main():
                                    game_info.typed_kana, game_info.target_kana)
         DrawingUtil.print_progress(ui.screen, (w / 2, 130), MARGIN + 5, ui.full_font,
                                    game_info.typed_roma, game_info.target_roma)
+        ui.print_str(MARGIN - 12, 60, ui.full_font, game_info.full, more_whiteish(TEXT_COLOR, 30))
 
         # 正確率ゲージ
         pygame.draw.rect(ui.screen, GREEN_THICK_COLOR if not game_info.is_ac else RED_COLOR, (0, 60, w * game_info.get_sentence_accuracy(), 3))
@@ -243,8 +258,17 @@ def main():
             pygame.draw.rect(ui.screen, RED_COLOR, (0, 187, w * acheive_rate, 3))
         pygame.draw.rect(ui.screen, GREEN_THICK_COLOR if game_info.get_rate() < 0.8 else BLUE_THICK_COLOR, (0, 187, w * game_info.get_rate(), 3))
 
-        # キーボード,
-        keyboard_drawer.draw(game_info.target_roma[:1], background_color=(192, 192, 192) if game_info.completed else None)
+        # キーボード
+
+        if is_tmp_next_lyrics_printing or is_cont_next_lyrics_printing:
+            for i in range(3):
+                lyrics_index = (i + game_info.lyrincs_index + 1)
+                if lyrics_index >= len(game_info.score.score): break
+                ui.print_str(5, 193 + 60 * i, ui.system_font, "[{}]".format(lyrics_index), TEXT_COLOR)
+                ui.print_str(5, 210 + 60 * i, ui.full_font, game_info.score.score[lyrics_index][1], TEXT_COLOR)
+                ui.print_str(5, 230 + 60 * i, ui.system_font, Romautil.hira2roma(game_info.score.score[lyrics_index][2]), more_whiteish(TEXT_COLOR, 50))
+        else:
+            keyboard_drawer.draw(game_info.target_roma[:1], background_color=(192, 192, 192) if game_info.completed else None)
 
         # 点数表示
         if game_info.point < 0:
