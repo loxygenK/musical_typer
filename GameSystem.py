@@ -497,6 +497,10 @@ class SEControl:
     failed = pygame.mixer.Sound("ses/failed.wav")
     unneccesary = pygame.mixer.Sound("ses/unneccesary.wav")
     gameover = pygame.mixer.Sound("ses/gameover.wav")
+    ac = pygame.mixer.Sound("ses/ac.wav")
+    wa = pygame.mixer.Sound("ses/wa.wav")
+    fast = pygame.mixer.Sound("ses/fast.wav")
+    tle = pygame.mixer.Sound("ses/tle.wav")
 
 class KeySpeedCalculator:
     def __init__(self, length=30):

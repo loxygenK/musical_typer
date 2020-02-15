@@ -240,14 +240,8 @@ def main():
                         judge_info.count_success()
                         judge_info.point += int(10 * key_speeder.get_key_per_second())
 
-                        # Add some special score
                         ui.add_foreground_draw_method(30, DrawMethodTemplates.slide_fadeout_text,
                                                       ["Pass", more_blackish(GREEN_THIN_COLOR, 50), ui.alphabet_font, 10, -150, -383])
-                        if current_zone == "tech-zone":
-                            judge_info.point += judge_info.SPECIAL_POINT
-                            SEControl.special_success.play()
-                        else:
-                            SEControl.success.play()
 
                         # Did player finished the sentence by this type?
                         if judge_info.completed and judge_info.sent_typed > 0:
@@ -256,11 +250,24 @@ def main():
                                                               ["AC", GREEN_THICK_COLOR, ui.alphabet_font, 20, -170, -383])
                                 ui.add_background_draw_method(15, DrawMethodTemplates.blink_rect,
                                                               [more_whiteish(GREEN_THIN_COLOR, 50), (0, 60, w, 130)])
+                                SEControl.ac.play()
                             else:
                                 ui.add_foreground_draw_method(120, DrawMethodTemplates.slide_fadeout_text,
                                                               ["WA", more_whiteish(BLUE_THICK_COLOR, 100), ui.alphabet_font, 20, -170, -383])
                                 ui.add_background_draw_method(15, DrawMethodTemplates.blink_rect,
                                                               [more_whiteish(BLUE_THICK_COLOR, 100), (0, 60, w, 130)])
+                                SEControl.wa.play()
+                        else:
+                            if current_zone == "tech-zone":
+                                judge_info.point += judge_info.SPECIAL_POINT
+                                SEControl.special_success.play()
+                            else:
+                                if key_speeder.get_key_per_second() > 4:
+                                    SEControl.fast.play()
+                                else:
+                                    SEControl.success.play()
+
+
                     else:
                         SEControl.failed.play()
                         judge_info.count_failure()
@@ -298,6 +305,7 @@ def main():
                                                -150, -383])
                 ui.add_background_draw_method(15, DrawMethodTemplates.blink_rect,
                                               [more_whiteish(RED_COLOR, 50), (0, 60, w, 130)])
+                SEControl.tle.play()
 
             # And erase something
             judge_info.reset_sentence_score()
