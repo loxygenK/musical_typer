@@ -117,9 +117,12 @@ class Screen:
             if self.bg_effector[k][1] > self.bg_effector[k][0]:
                 del self.bg_effector[k]
 
+    @DeprecationWarning
     def get_font_by_size(self, size):
         """
-        フォントをサイズから取得する
+        フォントをサイズから取得する。なんかそれなりに重いので使わんほうがいい
+        使うなら何回も呼び出すんじゃなくて変数に入れるとかしよう
+
         :param size: サイズ
         :return: フォント
         """
