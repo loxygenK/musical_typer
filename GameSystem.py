@@ -277,11 +277,11 @@ class GameInfo:
         #              ↓ |
         # ---|//(i-1)/////|-----(i)-----|---
         #     └→ここが引っかかる
-        for i in range(self.lyrincs_index, len(self.score.score)):
+        for i in range(self.lyrincs_index + 1, len(self.score.score)):
             if i < 0: continue
 
             # i番目の歌詞の開始時間がposを超えているか
-            if self.score.score[i][0] >= self.pos:
+            if self.score.score[i][0] > self.pos:
 
                 # 歌詞が変わっているか
                 is_lidx_changes = (i - 1) != self.lyrincs_index
@@ -436,7 +436,7 @@ class GameInfo:
         return self.calc_accuracy(self.sent_count, self.sent_miss)
 
     # *** 歌詞情報アップデート ***
-    def update_current_lyrics(self, full=None, kana=None, count_tle=True):
+    def update_current_lyrics(self, full=None, kana=None):
         """
         現在打つべき歌詞を設定する。kanaのローマ字変換結果が0文字だった場合は、self.completed はFalseになる。
 
@@ -445,7 +445,7 @@ class GameInfo:
         :return: なし
         """
 
-        self.reset_sentence_condition(count_tle)
+        self.reset_sentence_condition()
 
         if full is None:
             full = self.score.score[self.lyrincs_index][1]
@@ -460,6 +460,24 @@ class GameInfo:
 
         if len(self.target_roma) == 0:
             self.completed = True
+
+    def apply_TLE(self):
+        """
+        TLE計算をする
+        :return: なし
+        """
+
+        if len(self.target_roma) == 0:
+            return
+
+        self.point += GameInfo.COULDNT_TYPE_POINT * len(self.target_roma)
+        self.standard_point += GameInfo.ONE_CHAR_POINT * len(self.target_roma)
+        self.standard_point += GameInfo.CLEAR_POINT + GameInfo.PERFECT_POINT
+
+        self.missed += len(self.target_roma)
+        self.sent_miss += len(self.target_roma)
+        self.section_miss += len(self.target_roma)
+
 
     def get_section_missrate(self):
         """
@@ -486,18 +504,13 @@ class GameInfo:
         """
         self.section_log.append([self.section_count, self.section_miss])
 
-    def reset_sentence_condition(self, count_tle=True):
+    def reset_sentence_condition(self):
         """
         歌詞ごとの進捗情報を消去する。
 
         :param count_tle: TLEを処理する
         :return: なし
         """
-        
-        if count_tle:
-            self.point += GameInfo.COULDNT_TYPE_POINT * len(self.target_roma)
-            self.standard_point += GameInfo.ONE_CHAR_POINT * len(self.target_roma)
-            self.standard_point += GameInfo.CLEAR_POINT + GameInfo.PERFECT_POINT
         
         self.sent_count = 0
         self.sent_miss = 0
@@ -517,9 +530,6 @@ class GameInfo:
         """
         タイプ成功をカウントする。
         """
-
-        # キータイプをカウント
-        self.keytype_tick()
 
         # スコア／理想スコアをカウントする
         self.count += 1
@@ -541,6 +551,12 @@ class GameInfo:
 
         # 打つべきかなを取得する
         self.target_kana = Romautil.get_not_halfway_hr(self.target_kana, self.target_roma)
+
+        # ひらがな一つのタイプが終了した?
+        if not Romautil.is_halfway(self.target_kana, self.target_roma):
+            # キータイプをカウントする
+            self.keytype_tick()
+
 
         # これ以上打つ必要がないか
         if len(self.target_roma) == 0:
@@ -693,11 +709,10 @@ class GameInfo:
 
         :return: [key/sec]
         """
-        # TODO: 計算が違っていた!!!!!!!!!!11 とりあえず2で割ってるけど、ひらがな1一文字分でカウントさせること！
         if len(self.key_log) == 0:
             return 0
 
-        return 1 / self.get_key_type_average() / 2
+        return 1 / self.get_key_type_average()
 
 
 class SoundEffectConstants:

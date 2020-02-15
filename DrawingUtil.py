@@ -64,7 +64,9 @@ class KeyboardDrawer:
         if key_size         is -1:           key_size = self.key_size
         if key_margin       is -1:           key_margin = self.key_margin
         if width            is -1:           width = self.width
-        if background_color is (-1, -1, -1): background_color = self.background_color
+
+        if background_color is not None and background_color[0] == -1:
+            background_color = self.background_color
 
         w, h = pygame.display.get_surface().get_size()
         size = key_size + key_margin

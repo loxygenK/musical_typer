@@ -33,9 +33,10 @@ def main():
     score_data.read_score("test_music_text.tsc")
 
     # ゲームに必要なインスタンスを生成
-    game_info = GameInfo(score_data)
-    keyboard_drawer = DrawingUtil.KeyboardDrawer()
+
     ui = Screen()
+    game_info = GameInfo(score_data)
+    keyboard_drawer = DrawingUtil.KeyboardDrawer(ui.screen, 193, ui.full_font, 40, 5,  2)
 
     # FPS管理用インスタンスを生成
     fps_clock = pygame.time.Clock()
@@ -127,7 +128,6 @@ def main():
                                                [more_whiteish(BLUE_THICK_COLOR, 100), (0, 60, w, 130)])
                             SoundEffectConstants.wa.play()
                         else:
-                            # 成功音を流す
                             if game_info.score.zone[game_info.zone_index][1] == "tech-zone":
                                 SoundEffectConstants.special_success.play()
                             else:
@@ -157,6 +157,9 @@ def main():
         # 歌詞が変わった?
         if lyx_idx:
 
+            # TLEの計算をする
+            game_info.apply_TLE()
+
             # 最終的なタイプ情報を記録する
             game_info.record_sentence_score()
 
@@ -172,7 +175,7 @@ def main():
                 # 歌詞が変わるまでの待機時間を考慮して、前回のキータイプ時間を早める
                 game_info.override_key_prev_pos()
 
-            # TLEによる減点を反映して歌詞をアップデートする
+            # 歌詞をアップデートする
             game_info.update_current_lyrics()
 
             # 曲が終わった?
@@ -199,14 +202,7 @@ def main():
             # セクションのデータを削除
             game_info.reset_section_score()
 
-
-        # ===== ゲームオーバー処理 =====
-
-        if game_info.point < -300:
-            game_finished_reason = "gameover"
-            break
-
-        # ----------------
+        # ---------------
         #     画面描画
         # ----------------
 
@@ -247,9 +243,8 @@ def main():
             pygame.draw.rect(ui.screen, RED_COLOR, (0, 187, w * acheive_rate, 3))
         pygame.draw.rect(ui.screen, GREEN_THICK_COLOR if game_info.get_rate() < 0.8 else BLUE_THICK_COLOR, (0, 187, w * game_info.get_rate(), 3))
 
-        # キーボード
-        keyboard_drawer.draw(ui.screen, 193, ui.full_font, 40, 5, game_info.target_roma[:1], 2,
-                             background_color=(192, 192, 192) if game_info.completed else None)
+        # キーボード,
+        keyboard_drawer.draw(game_info.target_roma[:1], background_color=(192, 192, 192) if game_info.completed else None)
 
         # 点数表示
         if game_info.point < 0:
@@ -324,18 +319,6 @@ def main():
     print("*****************")
     print(mainloop_continues)
     print(game_finished_reason)
-
-    if game_finished_reason == "gameover":
-        ui.add_bg_effector(300, DrawMethodTemplates.blink_screen, [(192, 0, 0)])
-        ui.add_bg_effector(300, DrawMethodTemplates.slide_fadeout_text, ["Too many mistake!", (255, 127, 0), ui.nihongo_font, -25, 0, 0])
-        SoundEffectConstants.gameover.play()
-        for _ in range(300):
-            pygame.mixer.music.fadeout(1000)
-            ui.update_bg_effector()
-            pygame.time.wait(1000 // 60)
-            pygame.display.update()
-
-
 
 
 if __name__ == '__main__':
