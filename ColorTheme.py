@@ -3,7 +3,7 @@
 #   loxygenK/musical_typer   #
 #   デザイン関係定数         #
 #   (c)2020 loxygenK         #
-#      All right reversed.   #
+#      All rights reversed.   #
 #                            #
 ##############################
 

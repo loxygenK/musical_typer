@@ -3,7 +3,7 @@
 #   loxygenK/musical_typer       #
 #   ローマ字関係ユーティリティ   #
 #   (c)2020 loxygenK             #
-#      All right reversed.       #
+#      All rights reversed.       #
 #                                #
 ##################################
 

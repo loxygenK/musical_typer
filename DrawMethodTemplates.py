@@ -3,7 +3,7 @@
 #   loxygenK/musical_typer       #
 #   エフェクターメソッド         #
 #   (c)2020 loxygenK             #
-#      All right reversed.       #
+#      All rights reversed.       #
 #                                #
 ##################################
 import pygame
