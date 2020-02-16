@@ -42,6 +42,20 @@ class KeyboardDrawer:
         self.background_color = background_color
         pass
 
+    def get_place(self, key_char):
+        w, h = pygame.display.get_surface().get_size()
+        size = self.key_size + self.key_margin
+        for i in range(4):
+            key = self.keyboard[i]
+            start = (w - size * len(key)) / 2
+            index = key.find(key_char)
+            if index != -1:
+                y = self.start_y + i * size
+                x = start + index * size
+                return (x, y)
+
+        return None
+
     def draw(self, highlight="", *, screen=None, start_y=-1, font=None, key_size=-1, key_margin=-1, width=-1, background_color=(-1, -1, -1)):
         """
         キーボードに描画を行う。

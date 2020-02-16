@@ -23,13 +23,14 @@ class Screen:
     このクラスのインスタンスは画面そのものも持つ
     """
 
+    big_font = pygame.font.Font("mplus-1m-medium.ttf", 72)
     nihongo_font = pygame.font.Font("mplus-1m-medium.ttf", 48)
     alphabet_font = pygame.font.Font("mplus-1m-medium.ttf", 32)
     full_font = pygame.font.Font("mplus-1m-medium.ttf", 24)
     system_font = pygame.font.Font("mplus-1m-medium.ttf", 16)
 
     def __init__(self):
-        self.screen = pygame.display.set_mode((640, 853))
+        self.screen = pygame.display.set_mode((640, 590))
         self.fg_effector: dict = {}
         self.bg_effector: dict = {}
         pygame.display.set_caption("Musical Typer")
@@ -55,10 +56,11 @@ class Screen:
         """
         DrawingUtil.print_str(self.screen, x, y, font, text, color)
     
-    def add_fg_effector(self, living_frame, draw_func, argument=None):
+    def add_fg_effector(self, living_frame, section_name, draw_func, argument=None):
         """
         前面エフェクターを追加する。
         :param living_frame: 生存時間
+        :param section_name: エフェクターのセクション名
         :param draw_func: 描画メソッド
         :param argument: 描画メソッドに渡す引数
         :return: なし
@@ -66,16 +68,17 @@ class Screen:
 
         # if draw_func.__name__ in self.fg_effector.keys() は遅い:/
         try:
-            del self.fg_effector[draw_func.__name__]
+            del self.fg_effector[draw_func.__name__ + section_name]
         except:
             pass
 
-        self.fg_effector.setdefault(draw_func.__name__, [living_frame, 0, draw_func, argument])
+        self.fg_effector.setdefault(draw_func.__name__ + section_name, [living_frame, 0, draw_func, argument])
     
-    def add_bg_effector(self, living_frame, draw_func, argument=None):
+    def add_bg_effector(self, living_frame, section_name, draw_func, argument=None):
         """
         背面エフェクターを追加する。
         :param living_frame: 生存時間
+        :param section_name: エフェクターのセクション名
         :param draw_func: 描画メソッド
         :param argument: 描画メソッドに渡す引数
         :return: なし
@@ -83,11 +86,11 @@ class Screen:
 
         # if draw_func.__name__ in self.fg_effector.keys() は遅い:/
         try:
-            del self.bg_effector[draw_func.__name__]
+            del self.bg_effector[draw_func.__name__ + section_name]
         except:
             pass
 
-        self.bg_effector.setdefault(draw_func.__name__, [living_frame, 0, draw_func, argument])
+        self.bg_effector.setdefault(draw_func.__name__ + section_name, [living_frame, 0, draw_func, argument])
 
     def update_fg_effector(self):
         """
@@ -202,6 +205,9 @@ class GameInfo:
         self.prev_time = 0
         self.length = key_length
 
+        # コンボ
+        self.combo = 0
+
     # ----- プロパティ -----
 
     # *** タイプ情報 ***
@@ -288,7 +294,7 @@ class GameInfo:
             return False
 
         # 一番最後の歌詞かどうか
-        if self.lyrincs_index > len(self.score.score) - 1:
+        if self.song_finished:
             # 一番最後からは変化しない
             return False
         else:
@@ -301,14 +307,15 @@ class GameInfo:
         #              ↓ |
         # ---|//(i-1)/////|-----(i)-----|---
         #     └→ここが引っかかる
-        for i in range(self.lyrincs_index + 1, len(self.score.score)):
+        for i in range(self.lyrincs_index, len(self.score.score)):
             if i < 0: continue
+
 
             # i番目の歌詞の開始時間がposを超えているか
             if self.score.score[i][0] > self.pos:
 
                 # 歌詞が変わっているか
-                is_lidx_changes = (i - 1) != self.lyrincs_index
+                is_lidx_changes = i - 1 != self.lyrincs_index
                 if is_lidx_changes:
 
                     # 更新する
@@ -318,7 +325,10 @@ class GameInfo:
                 return is_lidx_changes
 
         # ヒットしなかった(歌詞が終了した)
-        self.song_finished = True
+        if not self.song_finished:
+            self.song_finished = True
+            return True
+
         return False
 
     def get_current_section(self):
@@ -336,7 +346,7 @@ class GameInfo:
         if self.section_index > len(self.score.section) - 1:
             return False
         else:
-            if self.score.zone[self.zone_index + 1][0] > self.pos:
+            if self.score.section[self.section_index + 1][0] > self.pos:
                 return False
 
         for i in range(self.section_index, len(self.score.section)):
@@ -495,7 +505,7 @@ class GameInfo:
             return
 
         self.point += GameInfo.COULDNT_TYPE_POINT * len(self.target_roma)
-        self.standard_point += GameInfo.ONE_CHAR_POINT * len(self.target_roma)
+        self.standard_point += GameInfo.ONE_CHAR_POINT * len(self.target_roma) * 40
         self.standard_point += GameInfo.CLEAR_POINT + GameInfo.PERFECT_POINT
 
         self.missed += len(self.target_roma)
@@ -560,13 +570,15 @@ class GameInfo:
         self.sent_count += 1
         self.section_count += 1
 
-        self.point += GameInfo.ONE_CHAR_POINT
-        self.point += int(10 * self.get_key_per_second())
+        self.combo += 1
 
-        self.standard_point += GameInfo.ONE_CHAR_POINT
+        self.point += int(GameInfo.ONE_CHAR_POINT * 10 * self.get_key_per_second() * (self.combo / 10))
+        ## self.point += int(10 * self.get_key_per_second())
+
+        self.standard_point += int(GameInfo.ONE_CHAR_POINT * 40 * (self.combo / 10))
 
         # tech-zone ゾーン内にいるか
-        if self.score.zone[self.zone_index][1] == "tech-zone":
+        if self.is_in_zone and self.score.zone[self.zone_index] == "tech-zone":
             self.point += self.SPECIAL_POINT
 
         # 歌詞情報を更新する
@@ -596,6 +608,8 @@ class GameInfo:
 
             self.completed = True
 
+        return int(GameInfo.ONE_CHAR_POINT * 10 * self.get_key_per_second() * (self.combo / 10))
+
 
     def count_failure(self):
         """
@@ -607,6 +621,7 @@ class GameInfo:
         self.sent_miss += 1
         self.section_miss += 1
         self.point += GameInfo.MISS_POINT
+        self.combo = 0
 
     def is_exactly_expected_key(self, code):
         """
@@ -690,8 +705,9 @@ class GameInfo:
 
         rate = self.get_rate(accuracy)
 
-        for i in range(1, len(self.rank_standard)):
+        for i in range(0, len(self.rank_standard)):
             if self.rank_standard[i] < rate * 100:
+                print(self.rank_string[i])
                 return i
         return len(self.rank_standard) - 1
 
@@ -862,11 +878,6 @@ class Score:
                     if command == "start":
                         is_in_song = True
                         continue
-                    # 曲終了コマンド?
-                    elif command == "end":
-                        self.score.append([current_time, "end", ""])
-                        is_in_song = False
-                        continue
 
                 # 上記の条件にヒットしない文字列は、
                 # 曲データの外では許可されない
@@ -882,6 +893,10 @@ class Score:
                 # 間奏などで歌詞データがない
                 if command == "break":
                     self.score.append([current_time, "", ""])
+                    continue
+                if command == "end":
+                    self.score.append([current_time, ">>end<<", ""])
+                    is_in_song = False
                     continue
 
             # 歌詞のみ(キャプションなど)

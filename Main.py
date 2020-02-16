@@ -8,6 +8,7 @@
 ##############################
 
 import sys
+import os
 
 # Python管理ライブラリ
 import math
@@ -28,9 +29,19 @@ def main():
 
     # ----- [ ゲーム用の情報準備 ] -----
 
+    if len(sys.argv) < 2:
+        sys.stderr.write("Song is not specified!")
+        sys.exit(-1)
+    elif not os.path.isfile(sys.argv[1]):
+        sys.stderr.write("Specified path is not file, or not exists!")
+        sys.exit(-1)
+    else:
+        print("Game will start at soon. Stay tuned!")
+
+
     # 譜面を読み込む
     score_data = Score()
-    score_data.read_score("test_music_text.tsc")
+    score_data.read_score(sys.argv[1])
 
     # ゲームに必要なインスタンスを生成
 
