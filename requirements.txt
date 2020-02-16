@@ -1,0 +1,4 @@
+jaconv==0.2.4
+Pillow==6.2.1
+pygame==1.9.6
+romkan==0.2.1
