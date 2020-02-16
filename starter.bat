@@ -1,2 +1,2 @@
-python Main.py like-a-light.tsc
+python Main.py sampleScore.tsc
 pause
