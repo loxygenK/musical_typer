@@ -10,6 +10,7 @@
 import re
 import random
 
+import chardet
 import pygame
 import romkan
 
@@ -830,9 +831,17 @@ class Score:
         # 便利なやつ
         re_rect_blacket = re.compile(r"\[(.*)\]")
 
+        # エンコードを判別する
+        detect_result = None
+
+        with open(file_name, mode="rb") as f:
+            detect_result = chardet.detect(f.read())
+
+        encoding = detect_result["encoding"]
+
         # ファイルを読み込む
         lines = []
-        with open(file_name, mode="r") as f:
+        with open(file_name, mode="r", encoding=encoding) as f:
             lines = f.readlines()
 
         # ----- [ パース ] -----
