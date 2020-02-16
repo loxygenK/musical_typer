@@ -28,10 +28,11 @@ class Screen:
     nihongo_font = pygame.font.Font("mplus-1m-medium.ttf", 48)
     alphabet_font = pygame.font.Font("mplus-1m-medium.ttf", 32)
     full_font = pygame.font.Font("mplus-1m-medium.ttf", 24)
+    rank_font = pygame.font.Font("mplus-1m-medium.ttf", 20)
     system_font = pygame.font.Font("mplus-1m-medium.ttf", 16)
 
     def __init__(self):
-        self.screen = pygame.display.set_mode((640, 590))
+        self.screen = pygame.display.set_mode((640, 530))
         self.fg_effector: dict = {}
         self.bg_effector: dict = {}
         pygame.display.set_caption("Musical Typer")
