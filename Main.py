@@ -44,7 +44,6 @@ def main():
     # ループ管理用変数
     game_finished_reason = ""
     mainloop_continues = True
-    song_finished = False
 
     # フレームカウンター
     # 点滅処理などに使う
@@ -122,27 +121,35 @@ def main():
                     if game_info.is_expected_key(chr(event.key)):
 
                         # 成功処理をする
-                        game_info.count_success()
+                        got_point = game_info.count_success()
 
                         # 成功エフェクト
-                        ui.add_fg_effector(30, DrawMethodTemplates.slide_fadeout_text,
+                        ui.add_fg_effector(30, "AC/WA", DrawMethodTemplates.slide_fadeout_text,
                                            ["Pass", more_blackish(GREEN_THIN_COLOR, 50), ui.alphabet_font, 10, -150, -383])
+
+                        if not(is_cont_next_lyrics_printing or is_tmp_next_lyrics_printing):
+                            # キーボード上に点数を描画する
+                            x, y = keyboard_drawer.get_place(chr(event.key))
+                            x += keyboard_drawer.key_size / 2
+                            x -= ui.full_font.render("+{}".format(got_point), True, TEXT_COLOR).get_width() / 2
+                            ui.add_fg_effector(30, chr(event.key), DrawMethodTemplates.absolute_fadeout,
+                                               ["+{}".format(got_point), BLUE_THICK_COLOR, ui.full_font, 15, x, y])
 
                         # AC／WAのエフェクト
                         if game_info.is_ac:
-                            ui.add_fg_effector(120, DrawMethodTemplates.slide_fadeout_text,
+                            ui.add_fg_effector(120, "AC/WA", DrawMethodTemplates.slide_fadeout_text,
                                                ["AC", GREEN_THICK_COLOR, ui.alphabet_font, 20, -170, -383])
-                            ui.add_bg_effector(15, DrawMethodTemplates.blink_rect,
+                            ui.add_bg_effector(15, "AC/WA", DrawMethodTemplates.blink_rect,
                                                [more_whiteish(GREEN_THIN_COLOR, 50), (0, 60, w, 130)])
                             SoundEffectConstants.ac.play()
                         elif game_info.is_wa:
-                            ui.add_fg_effector(120, DrawMethodTemplates.slide_fadeout_text,
+                            ui.add_fg_effector(120, "AC/WA", DrawMethodTemplates.slide_fadeout_text,
                                                ["WA", more_whiteish(BLUE_THICK_COLOR, 100), ui.alphabet_font, 20, -170, -383])
-                            ui.add_bg_effector(15, DrawMethodTemplates.blink_rect,
+                            ui.add_bg_effector(15, "AC/WA", DrawMethodTemplates.blink_rect,
                                                [more_whiteish(BLUE_THICK_COLOR, 100), (0, 60, w, 130)])
                             SoundEffectConstants.wa.play()
                         else:
-                            if game_info.score.zone[game_info.zone_index][1] == "tech-zone":
+                            if game_info.is_in_zone and game_info.score.zone[game_info.zone_index]:
                                 SoundEffectConstants.special_success.play()
                             else:
                                 if game_info.get_key_per_second() > 4:
@@ -158,11 +165,11 @@ def main():
 
                         # エフェクト
 
-                        ui.add_bg_effector(15, DrawMethodTemplates.blink_rect,
+                        ui.add_bg_effector(15, "AC/WA", DrawMethodTemplates.blink_rect,
                                            [(255, 200, 200), (0, 60, w, 130)])
                         #ui.add_bg_effector(15, DrawMethodTemplates.blink_screen, [(255, 200, 200)])
-                        ui.add_fg_effector(30, DrawMethodTemplates.slide_fadeout_text,
-                                           ["WA", more_whiteish(RED_COLOR, 50), ui.alphabet_font,
+                        ui.add_fg_effector(30, "AC/WA", DrawMethodTemplates.slide_fadeout_text,
+                                           ["MISS", more_whiteish(RED_COLOR, 50), ui.alphabet_font,
                                                        10, -150, -383])
 
         # ------------
@@ -182,10 +189,10 @@ def main():
 
             # TLEした?
             if len(game_info.target_roma) > 0:
-                ui.add_fg_effector(30, DrawMethodTemplates.slide_fadeout_text,
+                ui.add_fg_effector(30, "TLE", DrawMethodTemplates.slide_fadeout_text,
                                    ["TLE", more_blackish(RED_COLOR, 50), ui.alphabet_font, -10,
                                                -150, -383])
-                ui.add_bg_effector(15, DrawMethodTemplates.blink_rect,
+                ui.add_bg_effector(15, "TLE", DrawMethodTemplates.blink_rect,
                                    [more_whiteish(RED_COLOR, 50), (0, 60, w, 130)])
                 SoundEffectConstants.tle.play()
             else:
@@ -199,7 +206,7 @@ def main():
             if game_info.song_finished:
                 # 歌詞情報を消去する
                 game_info.update_current_lyrics("", "")
-                ui.add_bg_effector(60, DrawMethodTemplates.slide_fadeout_text,
+                ui.add_bg_effector(60, "S.F.", DrawMethodTemplates.slide_fadeout_text,
                                    ["Song Finished!", (255, 127, 0), ui.system_font, 25, 0, 0])
 
 
@@ -209,7 +216,7 @@ def main():
             # セクションを全完した?
             if game_info.section_miss == 0 and game_info.section_count != 0:
                 # エフェクトとボーナスポイント
-                ui.add_bg_effector(60, DrawMethodTemplates.slide_fadeout_text,
+                ui.add_bg_effector(60, "Section AC", DrawMethodTemplates.slide_fadeout_text,
                                    ["Section AC!", (255, 127, 0), ui.system_font, 25, 0, 0])
                 game_info.point += game_info.SECTION_PERFECT_POINT
 
@@ -244,11 +251,16 @@ def main():
         # ----- [ 前面レイヤー ] -----
 
         # 歌詞
-        DrawingUtil.print_progress(ui.screen, (w / 2, 80), MARGIN + 5, ui.nihongo_font,
+        DrawingUtil.print_progress(ui.screen, (w / 2, 80), MARGIN + 20, ui.nihongo_font,
                                    game_info.typed_kana, game_info.target_kana)
         DrawingUtil.print_progress(ui.screen, (w / 2, 130), MARGIN + 5, ui.full_font,
                                    game_info.typed_roma, game_info.target_roma)
         ui.print_str(MARGIN - 12, 60, ui.full_font, game_info.full, more_whiteish(TEXT_COLOR, 30))
+
+        # コンボ
+        combo_text = ui.full_font.render(str(game_info.combo), True, more_whiteish(TEXT_COLOR, 50))
+        ui.screen.blit(combo_text, (MARGIN - 12, 157))
+        ui.print_str(combo_text.get_width() + 5, 165, ui.system_font, "chain", more_whiteish(TEXT_COLOR, 75))
 
         # 正確率ゲージ
         pygame.draw.rect(ui.screen, GREEN_THICK_COLOR if not game_info.is_ac else RED_COLOR, (0, 60, w * game_info.get_sentence_accuracy(), 3))
@@ -346,6 +358,62 @@ def main():
     print("*****************")
     print(mainloop_continues)
     print(game_finished_reason)
+
+    pygame.mixer.music.stop()
+
+    mainloop_continues = True
+    while mainloop_continues:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                mainloop_continues = False
+                break
+            if event.type == KEYDOWN:
+                # ESCキーの場合
+                if event.key == K_ESCAPE:
+                    mainloop_continues = False
+                    break
+
+        ui.screen.fill(BACKGROUND_COLOR)
+
+        # 曲のタイトルなどの情報
+        ui.print_str(MARGIN, 0, ui.nihongo_font, score_data.properties["title"], TEXT_COLOR)
+        ui.print_str(MARGIN, 50, ui.full_font,
+                                score_data.properties["song_author"] + "／" + score_data.properties["singer"],
+                                more_whiteish(TEXT_COLOR, 25))
+
+        pygame.draw.line(ui.screen, more_whiteish(TEXT_COLOR, 100), (0, 80), (w, 80), 2)
+
+        ui.print_str(MARGIN, 85, ui.big_font,
+                     game_info.rank_string[game_info.calcutate_rank()],
+                     more_blackish(RED_COLOR, 150 * (game_info.calcutate_rank() + 1) / len(game_info.rank_standard)))
+
+        ui.print_str(MARGIN, 150, ui.nihongo_font, "{:06.2f}％".format(game_info.get_rate() * 100),
+                     tuple(x * game_info.get_full_accuracy() for x in RED_COLOR))
+
+        if game_info.get_key_per_second() > 4:
+            pygame.draw.rect(ui.screen, more_blackish(RED_COLOR, 30), (MARGIN, 210, w - MARGIN * 2, 20))
+        else:
+            pygame.draw.rect(ui.screen, GREEN_THIN_COLOR, (MARGIN, 210, w - MARGIN * 2, 20))
+            pygame.draw.rect(ui.screen, more_blackish(GREEN_THIN_COLOR, 50),
+                             (MARGIN, 210, game_info.get_key_per_second() / 4 * (w - MARGIN * 2), 20))
+
+        DrawingUtil.write_center_x(ui.screen, w / 2, 208, ui.system_font,
+                                   "{:4.2f} Char/sec".format(game_info.get_key_per_second()), TEXT_COLOR)
+
+        if game_info.calcutate_rank() > 0:
+            acheive_rate = game_info.rank_standard[game_info.calcutate_rank() - 1] - game_info.get_rate() * 100
+            ui.print_str(MARGIN + 200, 160, ui.system_font, "{} まで ".format(game_info.rank_string[game_info.calcutate_rank() - 1]), BLUE_THICK_COLOR)
+            ui.print_str(MARGIN + 200, 168, ui.alphabet_font, "{:06.2f}% ".format(acheive_rate), BLUE_THICK_COLOR)
+
+        ui.print_str(MARGIN, 240, ui.system_font, "正確率", more_whiteish(TEXT_COLOR, 50))
+        ui.print_str(MARGIN + 10, 247, ui.nihongo_font, "{:06.2f}%".format(game_info.get_full_accuracy() * 100),
+                     tuple(x * game_info.get_full_accuracy() for x in RED_COLOR))
+
+        DrawingUtil.write_limit(ui.screen, (w - 15, 150), w / 2, ui.nihongo_font, "{:08}".format(game_info.point))
+
+        fps_clock.tick(60)
+        pygame.display.update()
+
 
 
 if __name__ == '__main__':
