@@ -10,6 +10,16 @@ import pygame
 
 from GameSystem import Screen
 
+def absolute_fadeout(current_frame, total_frame, ui: Screen, args):
+    """
+    スライドして消えていく文字を描画する。座標は絶対指定。
+    """
+    w, h = ui.screen_size
+
+    color = args[1] + (255 * (current_frame / total_frame),)
+
+    ui.print_str(args[4], args[5] - args[3] * (current_frame / total_frame), args[2], args[0], color)
+
 
 def slide_fadeout_text(current_frame, total_frame, ui: Screen, args):
     """
