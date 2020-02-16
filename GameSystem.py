@@ -154,9 +154,9 @@ class GameInfo:
         self.pos = 0
 
         # 現在の歌詞／ゾーン／セクションの番号
-        self.lyrincs_index =  0
-        self.zone_index = 0
-        self.section_index = 0
+        self.lyrincs_index =  -1
+        self.zone_index = -1
+        self.section_index = -1
 
         # すべての歌詞／セクションが打ち終わったか
         self.song_finished = False
@@ -218,6 +218,7 @@ class GameInfo:
 
         :return: すでに打ったローマ字
         """
+
         typed_index = self.full_kana.rindex(self.target_kana)
 
         if len(self.target_kana) > 0:
@@ -707,7 +708,6 @@ class GameInfo:
 
         for i in range(0, len(self.rank_standard)):
             if self.rank_standard[i] < rate * 100:
-                print(self.rank_string[i])
                 return i
         return len(self.rank_standard) - 1
 

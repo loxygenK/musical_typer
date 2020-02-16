@@ -65,7 +65,7 @@ def get_not_halfway_hr(full_hiragana, progress_roma):
     index = romaji.rfind(progress_roma)
 
     if re.match("[aeiouyn]", romaji[index]) and romkan.is_consonant(romaji[index - 1]):
-        if len(romaji) >= 2 and romkan.is_consonant(romaji[index - 2]):
+        if index >= 2 and romkan.is_consonant(romaji[index - 2]):
             return romkan.to_hiragana(romaji[index - 2:])[1:]
         else:
             return romkan.to_hiragana(romaji[index - 1:])
