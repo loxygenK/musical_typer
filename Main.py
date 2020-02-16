@@ -262,11 +262,16 @@ def main():
         # ----- [ 前面レイヤー ] -----
 
         # 歌詞
-        DrawingUtil.print_progress(ui.screen, (w / 2, 80), MARGIN + 20, ui.nihongo_font,
-                                   game_info.typed_kana, game_info.target_kana)
-        DrawingUtil.print_progress(ui.screen, (w / 2, 130), MARGIN + 5, ui.full_font,
-                                   game_info.typed_roma, game_info.target_roma)
-        ui.print_str(MARGIN - 12, 60, ui.full_font, game_info.full, more_whiteish(TEXT_COLOR, 30))
+
+        if game_info.full[:1] != "/" or game_info.sent_count > 0:
+            DrawingUtil.print_progress(ui.screen, (w / 2, 80), MARGIN + 20, ui.nihongo_font,
+                                       game_info.typed_kana, game_info.target_kana)
+            DrawingUtil.print_progress(ui.screen, (w / 2, 130), MARGIN + 5, ui.full_font,
+                                       game_info.typed_roma, game_info.target_roma)
+
+            printout_lyrics = game_info.full if game_info.full[:1] != "/" else game_info.full[1:]
+
+            ui.print_str(MARGIN - 12, 60, ui.full_font, printout_lyrics, more_whiteish(TEXT_COLOR, 30))
 
         # コンボ
         combo_text = ui.full_font.render(str(game_info.combo), True, more_whiteish(TEXT_COLOR, 50))
@@ -291,8 +296,10 @@ def main():
                 lyrics_index = (i + game_info.lyrincs_index + 1)
                 if lyrics_index >= len(game_info.score.score): break
                 ui.print_str(5, 193 + 60 * i, ui.system_font, "[{}]".format(lyrics_index), TEXT_COLOR)
-                ui.print_str(5, 210 + 60 * i, ui.full_font, game_info.score.score[lyrics_index][1], TEXT_COLOR)
-                ui.print_str(5, 230 + 60 * i, ui.system_font, Romautil.hira2roma(game_info.score.score[lyrics_index][2]), more_whiteish(TEXT_COLOR, 50))
+
+                if ui.full_font[:1] == "/":
+                    ui.print_str(5, 210 + 60 * i, ui.full_font, game_info.score.score[lyrics_index][1], TEXT_COLOR)
+                    ui.print_str(5, 230 + 60 * i, ui.system_font, Romautil.hira2roma(game_info.score.score[lyrics_index][2]), more_whiteish(TEXT_COLOR, 50))
         else:
             keyboard_drawer.draw(game_info.target_roma[:1], background_color=(192, 192, 192) if game_info.completed else None)
 
