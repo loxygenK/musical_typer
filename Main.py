@@ -297,7 +297,7 @@ def main():
                 if lyrics_index >= len(game_info.score.score): break
                 ui.print_str(5, 193 + 60 * i, ui.system_font, "[{}]".format(lyrics_index), TEXT_COLOR)
 
-                if ui.full_font[:1] == "/":
+                if game_info.score.score[lyrics_index][1][:1] != "/":
                     ui.print_str(5, 210 + 60 * i, ui.full_font, game_info.score.score[lyrics_index][1], TEXT_COLOR)
                     ui.print_str(5, 230 + 60 * i, ui.system_font, Romautil.hira2roma(game_info.score.score[lyrics_index][2]), more_whiteish(TEXT_COLOR, 50))
         else:
@@ -329,36 +329,18 @@ def main():
         DrawingUtil.write_center_x(ui.screen, w / 2, 398, ui.system_font, "{:4.2f} Char/sec".format(game_info.get_key_per_second()), TEXT_COLOR)
 
         # 正確率の数値情報
-        ui.print_str(MARGIN, 430, ui.system_font, "正確率の詳細", more_whiteish(TEXT_COLOR, 100))
+        ui.print_str(MARGIN, 430, ui.system_font, "正確率", more_whiteish(TEXT_COLOR, 100))
 
         pygame.draw.rect(ui.screen, more_blackish(RED_COLOR, 50),
-                         (MARGIN + 10, 510, game_info.get_sentence_accuracy() * 175, 3))
-        ui.print_str(MARGIN + 10, 450, ui.system_font, "文単位", more_whiteish(TEXT_COLOR, 50))
-        ui.print_str(MARGIN + 10, 460, ui.nihongo_font, "{:06.2f}%".format(game_info.get_sentence_accuracy() * 100),
-                     tuple(x * game_info.get_sentence_accuracy() for x in RED_COLOR))
-
-        pygame.draw.rect(ui.screen, more_blackish(TEXT_COLOR, 50),
-                         (MARGIN + 200, 510, game_info.get_section_missrate() * 175, 3))
-        ui.print_str(MARGIN + 200, 450, ui.system_font, "セクション単位", more_whiteish(TEXT_COLOR, 50))
-        ui.print_str(MARGIN + 200, 460, ui.nihongo_font, "{:06.2f}%".format(game_info.get_section_missrate() * 100),
-                     tuple(x * game_info.get_section_missrate() for x in RED_COLOR))
-
-        pygame.draw.rect(ui.screen, more_blackish(TEXT_COLOR, 50),
-                         (MARGIN + 400, 510, game_info.get_full_accuracy() * 175, 3))
-        ui.print_str(MARGIN + 400, 450, ui.system_font, "全体", more_whiteish(TEXT_COLOR, 50))
-        ui.print_str(MARGIN + 400, 460, ui.nihongo_font, "{:06.2f}%".format(game_info.get_full_accuracy() * 100),
+                         (MARGIN + 5, 510, game_info.get_full_accuracy() * 250, 3))
+        ui.print_str(MARGIN + 5, 430, ui.big_font, "{:05.1f}％".format(game_info.get_full_accuracy() * 100),
                      tuple(x * game_info.get_full_accuracy() for x in RED_COLOR))
 
-        # ランク
-        ui.print_str(MARGIN, 520, ui.system_font, "達成率", more_whiteish(TEXT_COLOR, 100))
-        ui.print_str(MARGIN + 10, 525, ui.nihongo_font, "{:06.2f}%".format(game_info.get_rate() * 100), BLUE_THICK_COLOR)
 
-        ui.print_str(MARGIN + 260, 520, ui.system_font, "次のランクまで", more_whiteish(TEXT_COLOR, 100))
-        if game_info.calcutate_rank() > 0:
-            acheive_rate = game_info.rank_standard[game_info.calcutate_rank() - 1] - game_info.get_rate() * 100
-            ui.print_str(MARGIN + 270, 525, ui.nihongo_font, "{:06.2f}% ".format(acheive_rate), BLUE_THICK_COLOR)
-        else:
-            ui.print_str(MARGIN + 270, 525, ui.nihongo_font, "N/A", BLUE_THICK_COLOR)
+
+        # ランク
+        ui.print_str(MARGIN + 320, 430, ui.system_font, "達成率", more_whiteish(TEXT_COLOR, 100))
+        ui.print_str(MARGIN + 330, 430, ui.big_font, "{:05.1f}％".format(game_info.get_rate() * 100), BLUE_THICK_COLOR)
 
         # レイヤーが変わるのでここで前面エフェクトを更新する
         ui.update_fg_effector()
