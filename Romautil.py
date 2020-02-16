@@ -24,8 +24,13 @@ def is_readable_key_pressed(code) -> bool:
     if chr(code) == "-": return True
 
     if not chr(code).isalnum(): return False
+
     if not chr(code).islower(): return False
-    if pygame.key.get_mods(): return False
+
+    modifier = pygame.key.get_mods()
+    if modifier != 0 and modifier != 4096:
+        return False
+
     return True
 
 
