@@ -147,6 +147,8 @@ class GameInfo:
     MISS_POINT = -30
     COULDNT_TYPE_POINT = -2
 
+    IDEAL_TYPE_SPEED = 3.0
+
     rank_standard = [200, 150, 125, 100, 99.50, 99, 98, 97, 94, 90, 80, 60, 40, 20, 10, 0]
     rank_string = ["Wow", "Unexpected", "Very God", "God", "Pro", "Genius", "Geki-tsuyo", "tsuyotusyo", "AAA", "AA", "A", "B", "C", "D", "E", "F"]
 
@@ -278,6 +280,20 @@ class GameInfo:
         :return: GameInfo.all_typedを満たし、かつミス数が0で「ない」場合True
         """
         return self.completed and self.sent_typed > 0 and self.sent_miss > 0
+
+    @property
+    def has_to_prevent_miss(self):
+        """
+        輪唱をまだタイプしていない場合など、特殊なケースにより
+        ミス判定をしてはいけない場合にTrueを返す。
+
+        :return: ミス判定をしてはいけない場合にTrue
+        """
+
+        if self.full[:1] == "/" and self.sent_count == 0:
+            return True
+
+        return False
 
     # ----- メソッド -----
 
@@ -507,6 +523,9 @@ class GameInfo:
         if len(self.target_roma) == 0:
             return
 
+        if self.has_to_prevent_miss:
+            return
+
         self.point += GameInfo.COULDNT_TYPE_POINT * len(self.target_roma)
         self.standard_point += GameInfo.ONE_CHAR_POINT * len(self.target_roma) * 40
         self.standard_point += GameInfo.CLEAR_POINT + GameInfo.PERFECT_POINT
@@ -578,7 +597,7 @@ class GameInfo:
         self.point += int(GameInfo.ONE_CHAR_POINT * 10 * self.get_key_per_second() * (self.combo / 10))
         ## self.point += int(10 * self.get_key_per_second())
 
-        self.standard_point += int(GameInfo.ONE_CHAR_POINT * 40 * (self.combo / 10))
+        self.standard_point += int(GameInfo.ONE_CHAR_POINT * GameInfo.IDEAL_TYPE_SPEED * 10 * (self.combo / 10))
 
         # tech-zone ゾーン内にいるか
         if self.is_in_zone and self.score.zone[self.zone_index] == "tech-zone":

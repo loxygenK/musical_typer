@@ -129,6 +129,10 @@ def main():
                     # 正しいキーが押されたか
                     if game_info.is_expected_key(chr(event.key)):
 
+                        # 輪唱で初めての打鍵か
+                        if game_info.full[:1] and game_info.sent_count == 0:
+                            game_info.override_key_prev_pos()
+
                         # 成功処理をする
                         got_point = game_info.count_success()
 
@@ -166,20 +170,23 @@ def main():
                                 else:
                                     SoundEffectConstants.success.play()
                     else:
-                        # 失敗をカウントする
-                        game_info.count_failure()
 
-                        # 効果音を流す
-                        SoundEffectConstants.failed.play()
+                        if not game_info.has_to_prevent_miss:
+                            # 失敗をカウントする
+                            game_info.count_failure()
 
-                        # エフェクト
+                            # 効果音を流す
+                            SoundEffectConstants.failed.play()
 
-                        ui.add_bg_effector(15, "AC/WA", DrawMethodTemplates.blink_rect,
-                                           [(255, 200, 200), (0, 60, w, 130)])
-                        #ui.add_bg_effector(15, DrawMethodTemplates.blink_screen, [(255, 200, 200)])
-                        ui.add_fg_effector(30, "AC/WA", DrawMethodTemplates.slide_fadeout_text,
-                                           ["MISS", more_whiteish(RED_COLOR, 50), ui.alphabet_font,
-                                                       10, -150, -383])
+                            # エフェクト
+
+                            ui.add_bg_effector(15, "AC/WA", DrawMethodTemplates.blink_rect,
+                                               [(255, 200, 200), (0, 60, w, 130)])
+                            ui.add_fg_effector(30, "AC/WA", DrawMethodTemplates.slide_fadeout_text,
+                                               ["MISS", more_whiteish(RED_COLOR, 50), ui.alphabet_font,
+                                                           10, -150, -383])
+                        else:
+                            SoundEffectConstants.unneccesary.play()
 
         # ------------
         #     計算
@@ -197,7 +204,7 @@ def main():
             game_info.record_sentence_score()
 
             # TLEした?
-            if len(game_info.target_roma) > 0:
+            if len(game_info.target_roma) > 0 and not game_info.has_to_prevent_miss:
                 ui.add_fg_effector(30, "TLE", DrawMethodTemplates.slide_fadeout_text,
                                    ["TLE", more_blackish(RED_COLOR, 50), ui.alphabet_font, -10,
                                                -150, -383])
@@ -299,7 +306,10 @@ def main():
                     ui.print_str(5, 210 + 60 * i, ui.full_font, game_info.score.score[lyrics_index][1], TEXT_COLOR)
                     ui.print_str(5, 230 + 60 * i, ui.system_font, Romautil.hira2roma(game_info.score.score[lyrics_index][2]), more_whiteish(TEXT_COLOR, 50))
         else:
-            keyboard_drawer.draw(game_info.target_roma[:1], background_color=(192, 192, 192) if game_info.completed else None)
+            if game_info.has_to_prevent_miss:
+                keyboard_drawer.draw("", background_color=(192, 192, 192))
+            else:
+                keyboard_drawer.draw(game_info.target_roma[:1], background_color=(192, 192, 192) if game_info.completed else None)
 
         # 点数表示
         if game_info.point < 0:
