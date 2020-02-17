@@ -658,6 +658,10 @@ class GameInfo:
         if len(self.target_roma) == 0:
             return False
 
+        # l? は x? でもOK
+        if self.target_roma[0] == "x":
+            return code == "x" or code == "l"
+
         return self.target_roma[0] == code
 
     def is_expected_key(self, code):
