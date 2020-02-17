@@ -653,10 +653,11 @@ class GameInfo:
             return False
 
         if not Romautil.is_halfway(self.target_kana, self.target_roma):
-            first_character = self.target_kana[:1]
-            kunrei = romkan.to_kunrei(first_character)
-            hepburn = romkan.to_hepburn(first_character)
-            optimized = Romautil.hira2roma(first_character)
+
+            first_syllable = Romautil.get_first_syllable(self.target_kana)
+            kunrei = romkan.to_kunrei(first_syllable)
+            hepburn = romkan.to_hepburn(first_syllable)
+            optimized = Romautil.hira2roma(first_syllable)
 
             if kunrei[0] == "x":
                 return self.is_exactly_expected_key(code)
