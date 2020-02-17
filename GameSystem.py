@@ -18,6 +18,14 @@ import DrawingUtil
 import Romautil
 
 
+class ScoreFormatError(Exception):
+
+    def __init__(self, line, text):
+        super(ScoreFormatError, self).__init__(text + " at line " + str(line) + ".")
+
+    pass
+
+
 class Screen:
     """
     画面処理を簡単にするためのクラス。
@@ -822,7 +830,7 @@ class Score:
         :param init: データを削除するか(デフォルト: True)
         :return: なし
         """
-        self.log.append([Score.LOG_ERROR, [line, text]])
+        self.log.append([Score.LOG_ERROR, line, text])
         if init: self.re_initialize_except_log()
 
     def log_warn(self, line, text):
@@ -832,7 +840,7 @@ class Score:
         :param text: ログ内容。
         :return: なし
         """
-        self.log.append([Score.LOG_WARN, [line, text]])
+        self.log.append([Score.LOG_WARN, line, text])
 
     def re_initialize_except_log(self):
         """
@@ -879,9 +887,9 @@ class Score:
 
         is_in_song = False
 
-        for line in lines:
+        for i in range(len(lines)):
 
-            line = line.strip()
+            line = lines[i].strip()
 
             # ----- 処理対象行かの確認
 
@@ -915,7 +923,7 @@ class Score:
 
                 # 上記の条件にヒットしない文字列は、
                 # 曲データの外では許可されない
-                self.log_error(line, "Unknown text outside song section!")
+                self.log_error(i + 1, "Unknown text outside song section")
                 self.re_initialize_except_log()
                 break
 
@@ -953,7 +961,7 @@ class Score:
                 if len(song) != 0:
                     if len(phon) == 0:
                         # これはダメで、エラーを吐く
-                        self.log_error(line, "No pronunciation data!")
+                        self.log_error(i + 1, "No pronunciation data")
                         break
                     else:
                         self.score.append([current_time, song, phon])
@@ -997,13 +1005,19 @@ class Score:
         # 読み込み終わり
         self.score.insert(0, [0, "", ""])
 
-        # 曲のwaveファイルが定義されているか
-        if "song_data" not in self.properties.keys():
-            # それはダメ
-            self.log_error("[Loading song failed]", "No song specified!")
+        # エラーは出ていないか
+        if len(list(filter(lambda x: x[0] == Score.LOG_ERROR, self.log))) == 0:
+            # wavは定義されているか
+            if "song_data" not in self.properties.keys():
+                # それはダメ
+                raise ScoreFormatError(0, "Song is not specified")
+            else:
+                # 読み込む
+                pygame.mixer.music.load(self.properties["song_data"])
         else:
-            # 読み込む
-            pygame.mixer.music.load(self.properties["song_data"])
+            # エラーなので例外をスローする
+            raise ScoreFormatError(self.log[0][1], self.log[0][2])
+
 
 
 def set_val_to_dictionary(dict, key, value):

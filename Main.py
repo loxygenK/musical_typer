@@ -46,6 +46,7 @@ def gs_specify_score():
 
     return score_data
 
+
 def gs_main_routine(score_data: Score):
 
     # ゲームに必要なインスタンスを生成
@@ -375,6 +376,7 @@ def gs_main_routine(score_data: Score):
 
     return game_info
 
+
 def gs_result(game_info):
     ui = Screen()
     w, h = ui.screen_size
@@ -448,14 +450,55 @@ def gs_result(game_info):
     return retry
 
 
+def gs_special_error_log(score_data, path):
+
+    ui = Screen()
+    w, h = ui.screen_size
+
+    error_index = 0
+
+    mainloop_continues = True
+    while mainloop_continues:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                mainloop_continues = False
+                break
+            if event.type == KEYDOWN:
+                # ESCキーの場合
+                if event.key == K_ESCAPE:
+                    mainloop_continues = False
+                    break
+                if event.key == K_UP:
+                    error_index = max(0, error_index - 1)
+                if event.key == K_DOWN:
+                    error_index = min(error_index + 1, len(score_data.log) - 1)
+
+
+        ui.screen.fill(BACKGROUND_COLOR)
+
+        ui.print_str(MARGIN - 10, 0, ui.alphabet_font, "読み込みに失敗しました！", RED_COLOR)
+        ui.print_str(MARGIN - 10, 35, ui.system_font, "譜面がおかしなことになっているようです:", RED_COLOR)
+        ui.print_str(MARGIN - 10, 60, ui.system_font, path, TEXT_COLOR)
+
+        pygame.draw.line(ui.screen, more_whiteish(TEXT_COLOR, 100), (0, 83), (w, 83), 2)
+
+        ui.print_str(MARGIN, 90,  ui.system_font,   score_data.log[0][1], TEXT_COLOR)
+        ui.print_str(MARGIN, 105, ui.alphabet_font, score_data.log[0][2], TEXT_COLOR)
+
+        pygame.draw.line(ui.screen, more_whiteish(TEXT_COLOR, 100), (0, 160), (w, 160), 2)
+
+        fps_clock.tick(60)
+        pygame.display.update()
+
+
 if __name__ == '__main__':
 
-    score_data = gs_specify_score()
+    try:
+        score_data = gs_specify_score()
 
-    loop_continues = True
-    while loop_continues:
-        game_result = gs_main_routine(score_data)
-        loop_continues = gs_result(game_result)
-
-    pygame.quit()
-    sys.exit()
+        loop_continues = True
+        while loop_continues:
+            game_result = gs_main_routine(score_data)
+            loop_continues = gs_result(game_result)
+    finally:
+        pygame.quit()
