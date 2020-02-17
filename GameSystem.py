@@ -147,6 +147,8 @@ class GameInfo:
     MISS_POINT = -30
     COULDNT_TYPE_POINT = -2
 
+    IDEAL_TYPE_SPEED = 3.0
+
     rank_standard = [200, 150, 125, 100, 99.50, 99, 98, 97, 94, 90, 80, 60, 40, 20, 10, 0]
     rank_string = ["Wow", "Unexpected", "Very God", "God", "Pro", "Genius", "Geki-tsuyo", "tsuyotusyo", "AAA", "AA", "A", "B", "C", "D", "E", "F"]
 
@@ -578,7 +580,7 @@ class GameInfo:
         self.point += int(GameInfo.ONE_CHAR_POINT * 10 * self.get_key_per_second() * (self.combo / 10))
         ## self.point += int(10 * self.get_key_per_second())
 
-        self.standard_point += int(GameInfo.ONE_CHAR_POINT * 40 * (self.combo / 10))
+        self.standard_point += int(GameInfo.ONE_CHAR_POINT * GameInfo.IDEAL_TYPE_SPEED * 10 * (self.combo / 10))
 
         # tech-zone ゾーン内にいるか
         if self.is_in_zone and self.score.zone[self.zone_index] == "tech-zone":
