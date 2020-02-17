@@ -281,6 +281,20 @@ class GameInfo:
         """
         return self.completed and self.sent_typed > 0 and self.sent_miss > 0
 
+    @property
+    def has_to_prevent_miss(self):
+        """
+        輪唱をまだタイプしていない場合など、特殊なケースにより
+        ミス判定をしてはいけない場合にTrueを返す。
+
+        :return: ミス判定をしてはいけない場合にTrue
+        """
+
+        if self.full[:1] == "/" and self.sent_count == 0:
+            return True
+
+        return False
+
     # ----- メソッド -----
 
     # *** 現在の位置から情報を求める ***
@@ -507,6 +521,9 @@ class GameInfo:
         """
 
         if len(self.target_roma) == 0:
+            return
+
+        if self.has_to_prevent_miss:
             return
 
         self.point += GameInfo.COULDNT_TYPE_POINT * len(self.target_roma)
