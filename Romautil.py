@@ -64,12 +64,17 @@ def get_not_halfway_hr(full_hiragana, progress_roma):
     :param progress_roma: ローマ字
     """
 
+    # 空文字なら空文字を返す
     if len(progress_roma) == 0: return ""
-    romaji = hira2roma(full_hiragana)
 
+    # 全体のひらがなに対し、どこまで打っているのかを見る
+    romaji = hira2roma(full_hiragana)
     index = romaji.rfind(progress_roma)
 
-    if re.match("[aeiouyn]", romaji[index]) and romkan.is_consonant(romaji[index - 1]):
+    # 今母音を打とうとしていて、かつ直前に子音を打っている (taやhaなどに引っかかる)
+    if re.match("[aeiouyn]", romaji[index]) or romkan.is_consonant(romaji[index - 1]):
+
+        # 3文字で構成されるローマ表記の文字を打っているか (tyaやhyuなどに引っかかる)
         if index >= 2 and romkan.is_consonant(romaji[index - 2]):
             return romkan.to_hiragana(romaji[index - 2:])[1:]
         else:
@@ -87,3 +92,21 @@ def is_halfway(hiragana, english):
     :return: 中途半端であった場合はTrueを返す。
     """
     return hira2roma(get_not_halfway_hr(hiragana, english))[:1] != hira2roma(english)[:1]
+
+
+def get_first_syllable(hiragana):
+    """
+    ひらがなの最初の音節を取得する。
+    hiraganaが「へびのめ」なら「へ」、「じゃのめ」なら「じゃ」を返す。
+
+    :param hiragana: ひらがな。
+    :return: 最初の音節。
+    """
+
+    if len(hiragana) < 2:
+        return hiragana
+
+    if re.match("[ゃゅょ]", hiragana[1]):
+        return hiragana[:2]
+    else:
+        return hiragana[:1]
