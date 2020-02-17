@@ -25,7 +25,10 @@ import DrawMethodTemplates
 from GameSystem import *
 from ColorTheme import *
 
-def main():
+# FPS管理用インスタンスを生成
+fps_clock = pygame.time.Clock()
+
+def gs_specify_score():
 
     # ----- [ ゲーム用の情報準備 ] -----
 
@@ -41,14 +44,15 @@ def main():
     score_data = Score()
     score_data.read_score(sys.argv[1])
 
+    return score_data
+
+def gs_main_routine(score_data: Score):
+
     # ゲームに必要なインスタンスを生成
 
     ui = Screen()
     game_info = GameInfo(score_data)
     keyboard_drawer = DrawingUtil.KeyboardDrawer(ui.screen, 193, ui.full_font, 40, 5,  2)
-
-    # FPS管理用インスタンスを生成
-    fps_clock = pygame.time.Clock()
 
     # ループ管理用変数
     game_finished_reason = ""
@@ -369,7 +373,15 @@ def main():
 
     pygame.mixer.music.stop()
 
+    return game_info
+
+def gs_result(game_info):
+    ui = Screen()
+    w, h = ui.screen_size
+
     mainloop_continues = True
+    retry = False
+
     while mainloop_continues:
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -380,6 +392,11 @@ def main():
                 if event.key == K_ESCAPE:
                     mainloop_continues = False
                     break
+                elif event.key == K_r:
+                    retry = True
+                    mainloop_continues = False
+                    break
+
 
         ui.screen.fill(BACKGROUND_COLOR)
 
@@ -389,7 +406,7 @@ def main():
                                 score_data.properties["song_author"] + "／" + score_data.properties["singer"],
                                 more_whiteish(TEXT_COLOR, 25))
 
-        pygame.draw.line(ui.screen, more_whiteish(TEXT_COLOR, 100), (0, 80), (w, 80), 2)
+        pygame.draw.line(ui.screen, more_whiteish(TEXT_COLOR, 100), (0, 90), (w, 90), 2)
 
         ui.print_str(MARGIN, 85, ui.big_font,
                      game_info.rank_string[game_info.calcutate_rank()],
@@ -419,13 +436,26 @@ def main():
 
         DrawingUtil.write_limit(ui.screen, (w - 15, 150), w / 2, ui.nihongo_font, "{:08}".format(game_info.point))
 
+        pygame.draw.line(ui.screen, more_whiteish(TEXT_COLOR, 100), (0, 320), (w, 320), 2)
+
+        # TODO: 21世紀史上もっともひどいデザインをどうにかする
+        ui.print_str(MARGIN - 10, 320, ui.alphabet_font, "[R]／リトライ", TEXT_COLOR)
+        ui.print_str(MARGIN + 300, 320, ui.alphabet_font, "[Esc]／終了", TEXT_COLOR)
+
         fps_clock.tick(60)
         pygame.display.update()
 
+    return retry
 
 
 if __name__ == '__main__':
-    main()
+
+    score_data = gs_specify_score()
+
+    loop_continues = True
+    while loop_continues:
+        game_result = gs_main_routine(score_data)
+        loop_continues = gs_result(game_result)
 
     pygame.quit()
     sys.exit()
