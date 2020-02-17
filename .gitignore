@@ -2,3 +2,6 @@
 test_music*
 *.reapeaks
 *.rpp
+
+# python cache file
+__pycache__/
