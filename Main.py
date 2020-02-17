@@ -30,11 +30,9 @@ def main():
     # ----- [ ゲーム用の情報準備 ] -----
 
     if len(sys.argv) < 2:
-        sys.stderr.write("Song is not specified!")
-        sys.exit(-1)
+        raise RuntimeError("Song is not specified!")
     elif not os.path.isfile(sys.argv[1]):
-        sys.stderr.write("Specified path is not file, or not exists!")
-        sys.exit(-1)
+        raise FileNotFoundError("Specified path is not file, or not exists!")
     else:
         print("Game will start at soon. Stay tuned!")
 
