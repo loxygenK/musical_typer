@@ -8,7 +8,7 @@
 ##################################
 import pygame
 
-from GameSystem import Screen
+from lib.GameSystem import Screen
 
 def absolute_fadeout(current_frame, total_frame, ui: Screen, args):
     """

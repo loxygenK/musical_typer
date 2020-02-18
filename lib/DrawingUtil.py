@@ -2,7 +2,7 @@ import pygame
 from PIL import Image, ImageDraw
 from math import tan, radians
 
-from ColorTheme import *
+from lib.ColorTheme import *
 
 
 ##############################

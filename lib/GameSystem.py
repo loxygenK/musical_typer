@@ -14,8 +14,8 @@ import chardet
 import pygame
 import romkan
 
-import DrawingUtil
-import Romautil
+import lib.DrawingUtil
+import lib.Romautil
 
 
 class ScoreFormatError(Exception):
@@ -156,9 +156,6 @@ class GameInfo:
     COULDNT_TYPE_POINT = -2
 
     IDEAL_TYPE_SPEED = 3.0
-
-    rank_standard = [200, 150, 125, 100, 99.50, 99, 98, 97, 94, 90, 80, 60, 40, 20, 10, 0]
-    rank_string = ["Wow", "Unexpected", "Very God", "God", "Pro", "Genius", "Geki-tsuyo", "tsuyotusyo", "AAA", "AA", "A", "B", "C", "D", "E", "F"]
 
     def __init__(self, score, key_length=100):
 
@@ -399,18 +396,18 @@ class GameInfo:
 
         if len(self.score.zone) == 0:
             self.is_in_zone = False
-            return False
+            return
 
         if self.zone_index == len(self.score.zone) - 2:
             if self.score.zone[self.zone_index + 1][0] > self.pos:
                 self.is_in_zone = True
-                return False
+                return
             else:
                 self.is_in_zone = False
-                return False
+                return
         else:
             if self.score.zone[self.zone_index][0] <= self.pos < self.score.zone[self.zone_index + 1][0]:
-                return False
+                return
 
         for i in range(self.zone_index, len(self.score.zone)):
             if i < 0: continue
@@ -423,18 +420,18 @@ class GameInfo:
                         self.zone_index = i - 1
 
                     self.is_in_zone = True
-                    return is_lidx_changes
+                    return
                 else:
                     if self.zone_index != 0:
                         self.zone_index = 0
                         self.is_in_zone = False
-                        return True
+                        return
 
                     self.is_in_zone = False
-                    return False
+                    return
 
         self.is_in_zone = False
-        return False
+        return
 
     # *** 残り時間情報 ***
     def get_sentence_full_time(self):
@@ -541,7 +538,6 @@ class GameInfo:
         self.missed += len(self.target_roma)
         self.sent_miss += len(self.target_roma)
         self.section_miss += len(self.target_roma)
-
 
     def get_section_missrate(self):
         """
@@ -730,7 +726,7 @@ class GameInfo:
 
         return score / standard
 
-    def calcutate_rank(self, accuracy=-1):
+    def calculate_rank(self, accuracy=-1):
         """
         達成率からランクのIDを取得する
 
