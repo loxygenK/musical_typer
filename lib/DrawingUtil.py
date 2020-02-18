@@ -188,7 +188,7 @@ def print_progress(screen, pos, left_limit, font, typed, remain, past_color=None
     """
 
     if past_color is None:
-        past_color = more_whiteish(TEXT_COLOR, 100)
+        past_color = more_whitish(TEXT_COLOR, 100)
     if remain_color is None:
         remain_color = TEXT_COLOR
 

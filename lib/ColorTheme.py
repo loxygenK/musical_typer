@@ -17,7 +17,7 @@ TEXT_COLOR = (56, 56 , 62)
 MARGIN = 15
 
 
-def more_whiteish(base_color, delta):
+def more_whitish(base_color, delta):
     """
     指定した色よりも指定した数値分白めの色を取得する。
 
