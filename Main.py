@@ -160,14 +160,14 @@ def gs_main_routine(score_data: Score):
                             ui.add_fg_effector(120, "AC/WA", DrawMethodTemplates.slide_fadeout_text,
                                                ["AC", GREEN_THICK_COLOR, ui.alphabet_font, 20, -170, -383])
                             ui.add_bg_effector(15, "AC/WA", DrawMethodTemplates.blink_rect,
-                                               [more_whiteish(GREEN_THIN_COLOR, 50), (0, 60, w, 130)])
+                                               [more_whitish(GREEN_THIN_COLOR, 50), (0, 60, w, 130)])
                             SoundEffectConstants.ac.play()
                         elif game_info.is_wa:
                             ui.add_fg_effector(120, "AC/WA", DrawMethodTemplates.slide_fadeout_text,
-                                               ["WA", more_whiteish(BLUE_THICK_COLOR, 100), ui.alphabet_font, 20, -170,
+                                               ["WA", more_whitish(BLUE_THICK_COLOR, 100), ui.alphabet_font, 20, -170,
                                                 -383])
                             ui.add_bg_effector(15, "AC/WA", DrawMethodTemplates.blink_rect,
-                                               [more_whiteish(BLUE_THICK_COLOR, 100), (0, 60, w, 130)])
+                                               [more_whitish(BLUE_THICK_COLOR, 100), (0, 60, w, 130)])
                             SoundEffectConstants.wa.play()
                         else:
                             if game_info.is_in_zone and game_info.score.zone[game_info.zone_index]:
@@ -191,7 +191,7 @@ def gs_main_routine(score_data: Score):
                             ui.add_bg_effector(15, "AC/WA", DrawMethodTemplates.blink_rect,
                                                [(255, 200, 200), (0, 60, w, 130)])
                             ui.add_fg_effector(30, "AC/WA", DrawMethodTemplates.slide_fadeout_text,
-                                               ["MISS", more_whiteish(RED_COLOR, 50), ui.alphabet_font,
+                                               ["MISS", more_whitish(RED_COLOR, 50), ui.alphabet_font,
                                                 10, -150, -383])
                         else:
                             SoundEffectConstants.unneccesary.play()
@@ -217,7 +217,7 @@ def gs_main_routine(score_data: Score):
                                    ["TLE", more_blackish(RED_COLOR, 50), ui.alphabet_font, -10,
                                     -150, -383])
                 ui.add_bg_effector(15, "TLE", DrawMethodTemplates.blink_rect,
-                                   [more_whiteish(RED_COLOR, 50), (0, 60, w, 130)])
+                                   [more_whitish(RED_COLOR, 50), (0, 60, w, 130)])
                 SoundEffectConstants.tle.play()
             else:
                 # 歌詞が変わるまでの待機時間を考慮して、前回のキータイプ時間を早める
@@ -262,7 +262,7 @@ def gs_main_routine(score_data: Score):
         DrawingUtil.write_limit(ui.screen, (w - 2, 0), w / 2, ui.alphabet_font, score_data.properties["title"])
         DrawingUtil.write_limit(ui.screen, (w - 5, 33), w / 2, ui.system_font,
                                 score_data.properties["song_author"] + "／" + score_data.properties["singer"],
-                                more_whiteish(TEXT_COLOR, 100))
+                                more_whitish(TEXT_COLOR, 100))
 
         # 残り時間ゲージ
         pygame.draw.rect(ui.screen, more_blackish(BACKGROUND_COLOR, 25), (0, 60, w, 130))
@@ -284,18 +284,18 @@ def gs_main_routine(score_data: Score):
 
             printout_lyrics = game_info.full if game_info.full[:1] != "/" else game_info.full[1:]
 
-            ui.print_str(MARGIN - 12, 60, ui.full_font, printout_lyrics, more_whiteish(TEXT_COLOR, 30))
+            ui.print_str(MARGIN - 12, 60, ui.full_font, printout_lyrics, more_whitish(TEXT_COLOR, 30))
 
         # コンボ
-        combo_text = ui.full_font.render(str(game_info.combo), True, more_whiteish(TEXT_COLOR, 50))
+        combo_text = ui.full_font.render(str(game_info.combo), True, more_whitish(TEXT_COLOR, 50))
         ui.screen.blit(combo_text, (MARGIN - 12, 157))
-        ui.print_str(combo_text.get_width() + 5, 165, ui.system_font, "chain", more_whiteish(TEXT_COLOR, 75))
+        ui.print_str(combo_text.get_width() + 5, 165, ui.system_font, "chain", more_whitish(TEXT_COLOR, 75))
 
         # 正確率ゲージ
         pygame.draw.rect(ui.screen, GREEN_THICK_COLOR if not game_info.is_ac else RED_COLOR,
                          (0, 60, w * game_info.get_sentence_accuracy(), 3))
         DrawingUtil.write_limit(ui.screen, (w * game_info.get_rate(limit=True), 168), 0, ui.system_font,
-                                rank_string[game_info.calculate_rank()], more_whiteish(TEXT_COLOR, 100))
+                                rank_string[game_info.calculate_rank()], more_whitish(TEXT_COLOR, 100))
 
         # 達成率ゲージ
         if game_info.calculate_rank() > 0:
@@ -317,7 +317,7 @@ def gs_main_routine(score_data: Score):
                     ui.print_str(5, 210 + 60 * i, ui.full_font, game_info.score.score[lyrics_index][1], TEXT_COLOR)
                     ui.print_str(5, 230 + 60 * i, ui.system_font,
                                  Romautil.hira2roma(game_info.score.score[lyrics_index][2]),
-                                 more_whiteish(TEXT_COLOR, 50))
+                                 more_whitish(TEXT_COLOR, 50))
         else:
             if game_info.has_to_prevent_miss:
                 keyboard_drawer.draw("", background_color=(192, 192, 192))
@@ -336,10 +336,10 @@ def gs_main_routine(score_data: Score):
             ui.print_str(5, 20, ui.alphabet_font, "{:08d}".format(game_info.point), BLUE_THICK_COLOR)
 
         # --- リアルタイム情報 ---
-        pygame.draw.line(ui.screen, more_whiteish(TEXT_COLOR, 100), (0, 375), (w, 375), 2)
+        pygame.draw.line(ui.screen, more_whitish(TEXT_COLOR, 100), (0, 375), (w, 375), 2)
 
         # タイピング速度
-        ui.print_str(MARGIN, 382, ui.system_font, "タイピング速度", more_whiteish(TEXT_COLOR, 100))
+        ui.print_str(MARGIN, 382, ui.system_font, "タイピング速度", more_whitish(TEXT_COLOR, 100))
         if game_info.get_key_per_second() > 4:
             color = more_blackish(RED_COLOR, 30 if frame_count % 10 < 5 else 0)
             pygame.draw.rect(ui.screen, color, (MARGIN, 400, w - MARGIN * 2, 20))
@@ -352,7 +352,7 @@ def gs_main_routine(score_data: Score):
                                    "{:4.2f} Char/sec".format(game_info.get_key_per_second()), TEXT_COLOR)
 
         # 正確率の数値情報
-        ui.print_str(MARGIN, 430, ui.system_font, "正確率", more_whiteish(TEXT_COLOR, 100))
+        ui.print_str(MARGIN, 430, ui.system_font, "正確率", more_whitish(TEXT_COLOR, 100))
 
         pygame.draw.rect(ui.screen, more_blackish(RED_COLOR, 50),
                          (MARGIN + 5, 510, game_info.get_full_accuracy() * 250, 3))
@@ -360,7 +360,7 @@ def gs_main_routine(score_data: Score):
                      tuple(x * game_info.get_full_accuracy() for x in RED_COLOR))
 
         # ランク
-        ui.print_str(MARGIN + 320, 430, ui.system_font, "達成率", more_whiteish(TEXT_COLOR, 100))
+        ui.print_str(MARGIN + 320, 430, ui.system_font, "達成率", more_whitish(TEXT_COLOR, 100))
         ui.print_str(MARGIN + 330, 430, ui.big_font, "{:05.1f}％".format(game_info.get_rate() * 100), BLUE_THICK_COLOR)
 
         # レイヤーが変わるのでここで前面エフェクトを更新する
@@ -415,9 +415,9 @@ def gs_result(game_info):
         ui.print_str(MARGIN, 0, ui.nihongo_font, score.properties["title"], TEXT_COLOR)
         ui.print_str(MARGIN, 50, ui.full_font,
                      score.properties["song_author"] + "／" + score.properties["singer"],
-                     more_whiteish(TEXT_COLOR, 25))
+                     more_whitish(TEXT_COLOR, 25))
 
-        pygame.draw.line(ui.screen, more_whiteish(TEXT_COLOR, 100), (0, 90), (w, 90), 2)
+        pygame.draw.line(ui.screen, more_whitish(TEXT_COLOR, 100), (0, 90), (w, 90), 2)
 
         ui.print_str(MARGIN, 85, ui.big_font,
                      rank_string[game_info.calculate_rank()],
@@ -442,13 +442,13 @@ def gs_result(game_info):
                          "{} まで ".format(rank_string[game_info.calculate_rank() - 1]), BLUE_THICK_COLOR)
             ui.print_str(MARGIN + 200, 168, ui.alphabet_font, "{:06.2f}% ".format(acheive_rate), BLUE_THICK_COLOR)
 
-        ui.print_str(MARGIN, 240, ui.system_font, "正確率", more_whiteish(TEXT_COLOR, 50))
+        ui.print_str(MARGIN, 240, ui.system_font, "正確率", more_whitish(TEXT_COLOR, 50))
         ui.print_str(MARGIN + 10, 247, ui.nihongo_font, "{:06.2f}%".format(game_info.get_full_accuracy() * 100),
                      tuple(x * game_info.get_full_accuracy() for x in RED_COLOR))
 
         DrawingUtil.write_limit(ui.screen, (w - 15, 150), w / 2, ui.nihongo_font, "{:08}".format(game_info.point))
 
-        pygame.draw.line(ui.screen, more_whiteish(TEXT_COLOR, 100), (0, 320), (w, 320), 2)
+        pygame.draw.line(ui.screen, more_whitish(TEXT_COLOR, 100), (0, 320), (w, 320), 2)
 
         # TODO: 21世紀史上もっともひどいデザインをどうにかする
         ui.print_str(MARGIN - 10, 320, ui.alphabet_font, "[R]／リトライ", TEXT_COLOR)
@@ -488,12 +488,12 @@ def gs_special_error_log(score_data, path):
         ui.print_str(MARGIN - 10, 35, ui.system_font, "譜面がおかしなことになっているようです:", RED_COLOR)
         ui.print_str(MARGIN - 10, 60, ui.system_font, path, TEXT_COLOR)
 
-        pygame.draw.line(ui.screen, more_whiteish(TEXT_COLOR, 100), (0, 83), (w, 83), 2)
+        pygame.draw.line(ui.screen, more_whitish(TEXT_COLOR, 100), (0, 83), (w, 83), 2)
 
         ui.print_str(MARGIN, 90, ui.system_font, score_data.log[0][1], TEXT_COLOR)
         ui.print_str(MARGIN, 105, ui.alphabet_font, score_data.log[0][2], TEXT_COLOR)
 
-        pygame.draw.line(ui.screen, more_whiteish(TEXT_COLOR, 100), (0, 160), (w, 160), 2)
+        pygame.draw.line(ui.screen, more_whitish(TEXT_COLOR, 100), (0, 160), (w, 160), 2)
 
         fps_clock.tick(60)
         pygame.display.update()
