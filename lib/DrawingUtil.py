@@ -21,7 +21,7 @@ class KeyboardDrawer:
     keyboard = ["1234567890-\\^", "qwertyuiop@[", "asdfghjkl;:]", "zxcvbnm,./\\"]
     highlight_text = "fj"
 
-    def __init__(self, screen, start_y, font, key_size, key_margin, width = 1, background_color = None):
+    def __init__(self, screen, start_y, font, key_size, key_margin, width=1, background_color=None):
         """
         キーボード描画クラスを初期化する。
         
@@ -52,10 +52,11 @@ class KeyboardDrawer:
             if index != -1:
                 y = self.start_y + i * size
                 x = start + index * size
-                return (x, y)
+                return x, y
 
         return None
 
+    # TODO: this line make short
     def draw(self, highlight="", *, screen=None, start_y=-1, font=None, key_size=-1, key_margin=-1, width=-1, background_color=(-1, -1, -1)):
         """
         キーボードに描画を行う。
@@ -90,11 +91,19 @@ class KeyboardDrawer:
             for j in range(len(key)):
                 is_highlight_needed = (highlight != "" and highlight.lower() == key[j].lower())
                 if is_highlight_needed:
-                    pygame.draw.rect(screen, GREEN_THICK_COLOR,
-                                 (start + size * j, start_y + size * i, key_size, key_size), 0)
+                    pygame.draw.rect(
+                        screen,
+                        GREEN_THICK_COLOR,
+                        (start + size * j, start_y + size * i, key_size, key_size),
+                        0
+                    )
                 elif background_color is not None:
-                    pygame.draw.rect(screen, background_color,
-                                 (start + size * j, start_y + size * i, key_size, key_size), 0)
+                    pygame.draw.rect(
+                        screen,
+                        background_color,
+                        (start + size * j, start_y + size * i, key_size, key_size),
+                        0
+                    )
 
                 pygame.draw.rect(screen, TEXT_COLOR,
                                  (start + size * j, start_y + size * i, key_size, key_size), width)
@@ -105,12 +114,13 @@ class KeyboardDrawer:
                 elif key[j] in self.highlight_text:
                     color = BLUE_THICK_COLOR
 
-                chr = font.render(key[j].upper(), True, color)
-                screen.blit(chr, (start + size * j + key_size // 2 - chr.get_width() // 2, start_y + size * i + key_size // 2 - chr.get_height() // 2))
+                character = font.render(key[j].upper(), True, color)
+                # TODO: divide to some lines
+                screen.blit(character, (start + size * j + key_size // 2 - character.get_width() // 2, start_y + size * i + key_size // 2 - character.get_height() // 2))
 
 
 @DeprecationWarning
-def arc(surface, color, pos, radius, start_angle, stop_angle, width = 1):
+def arc(surface, color, pos, radius, start_angle, stop_angle):
     """
     弧を描画する。めちゃくちゃ重いので使わないほうがいい。
 
@@ -130,33 +140,39 @@ def arc(surface, color, pos, radius, start_angle, stop_angle, width = 1):
     im = Image.new("RGBA", (rd[0] - lu[0] + 1, rd[1] - lu[1]))
     draw = ImageDraw.Draw(im, "RGBA")
 
-    draw.arc((0, 0, rd[0] - lu[0], rd[1] - lu[1]), start_angle, stop_angle, fill=color, width=5)
+    draw.arc((0, 0, rd[0] - lu[0], rd[1] - lu[1]), start_angle, stop_angle, fill=color)
     byte = im.tobytes("raw")
     pyg_im = pygame.image.fromstring(byte, im.size, "RGBA")
 
     surface.blit(pyg_im, lu)
 
 
-def write_limit(screen, pos, left_limit, font, str, color=TEXT_COLOR):
+# TODO: 引数とdocstring違うんですけどカス
+def write_limit(screen, pos, left_limit, font, string, color=TEXT_COLOR):
     """
     左方向に描画制限を設けて、右揃えで文字列を描画する。
 
     :param screen: 描画対象スクリーン
     :param font: フォント
-    :param str: 描画する文字
+    :param string: 描画する文字
     :param left_limit: 左方向の制限X
     :param right: 描画基準X
     :param y: 描画基準Y
     :return: なし
     """
-    rect_typed = font.render(str, True, color)
+    rect_typed = font.render(string, True, color)
 
     if rect_typed.get_width() > (pos[0] - left_limit):
-        screen.blit(rect_typed, (left_limit, pos[1]),
-                       (rect_typed.get_width() - (pos[0] - left_limit), 0, rect_typed.get_width(), rect_typed.get_height()))
+        screen.blit(
+            rect_typed,
+            (left_limit, pos[1]),
+            (rect_typed.get_width() - (pos[0] - left_limit), 0, rect_typed.get_width(), rect_typed.get_height())
+        )
     else:
         screen.blit(rect_typed, (pos[0] - rect_typed.get_width(), pos[1]))
 
+
+# TODO: docstringが機能していなくてカス
 def print_progress(screen, pos, left_limit, font, typed, remain, past_color=None, remain_color=None):
     """
     タイピングの途中経過を描画する。
@@ -177,8 +193,8 @@ def print_progress(screen, pos, left_limit, font, typed, remain, past_color=None
         remain_color = TEXT_COLOR
 
     write_limit(screen, pos, left_limit, font, typed, past_color)
-    rect_nottyped = font.render(remain, True, remain_color)
-    screen.blit(rect_nottyped, pos, (0, 0, (pos[0] - left_limit), rect_nottyped.get_height()))
+    rect_not_typed = font.render(remain, True, remain_color)
+    screen.blit(rect_not_typed, pos, (0, 0, (pos[0] - left_limit), rect_not_typed.get_height()))
 
 
 def write_center_x(window, x, y, font, text, color=(255, 255, 255)):

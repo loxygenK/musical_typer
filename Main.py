@@ -209,7 +209,7 @@ def gs_main_routine(score_data: Score):
             game_info.apply_TLE()
 
             # 最終的なタイプ情報を記録する
-            game_info.record_sentence_score()
+            game_info.sentence_log.append([game_info.sent_count, game_info.sent_miss, game_info.completed])
 
             # TLEした?
             if len(game_info.target_roma) > 0 and not game_info.has_to_prevent_miss:
@@ -244,7 +244,7 @@ def gs_main_routine(score_data: Score):
                 game_info.point += game_info.SECTION_PERFECT_POINT
 
             # セクションごとのタイプ情報を記録
-            game_info.record_section_score()
+            game_info.section_log.append([game_info.section_count, game_info.section_miss])
 
             # セクションのデータを削除
             game_info.reset_section_score()
@@ -270,7 +270,7 @@ def gs_main_routine(score_data: Score):
                          (0, 60, math.floor(game_info.get_time_remain_ratio() * w), 130))
 
         # レイヤーが変わるのでここで背景エフェクトを更新する
-        ui.update_bg_effector()
+        ui.update_effector(1)
 
         # ----- [ 前面レイヤー ] -----
 
@@ -309,7 +309,8 @@ def gs_main_routine(score_data: Score):
         if is_tmp_next_lyrics_printing or is_cont_next_lyrics_printing:
             for i in range(3):
                 lyrics_index = (i + game_info.lyrincs_index + 1)
-                if lyrics_index >= len(game_info.score.score): break
+                if lyrics_index >= len(game_info.score.score):
+                    break
                 ui.print_str(5, 193 + 60 * i, ui.system_font, "[{}]".format(lyrics_index), TEXT_COLOR)
 
                 if game_info.score.score[lyrics_index][1][:1] != "/":
@@ -327,10 +328,10 @@ def gs_main_routine(score_data: Score):
         # 点数表示
         if game_info.point < 0:
             if frame_count % 20 < 10:
-                color = RED_COLOR
+                score_color = RED_COLOR
             else:
-                color = BLUE_THICK_COLOR
-            ui.print_str(5, 20, ui.alphabet_font, "{:08d}".format(game_info.point), color)
+                score_color = BLUE_THICK_COLOR
+            ui.print_str(5, 20, ui.alphabet_font, "{:08d}".format(game_info.point), score_color)
         else:
             ui.print_str(5, 20, ui.alphabet_font, "{:08d}".format(game_info.point), BLUE_THICK_COLOR)
 
@@ -363,7 +364,7 @@ def gs_main_routine(score_data: Score):
         ui.print_str(MARGIN + 330, 430, ui.big_font, "{:05.1f}％".format(game_info.get_rate() * 100), BLUE_THICK_COLOR)
 
         # レイヤーが変わるのでここで前面エフェクトを更新する
-        ui.update_fg_effector()
+        ui.update_effector(0)
 
         # FPSカウンタ
         ui.print_str(3, -3, ui.system_font, "{:5.2f} fps".format(fps_clock.get_fps()), TEXT_COLOR)
