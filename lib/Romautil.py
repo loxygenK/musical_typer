@@ -21,11 +21,14 @@ def is_readable_key_pressed(code) -> bool:
     :return: 上記の条件に当てはまればTrue、なければFalse
     """
 
-    if chr(code) == "-": return True
+    if chr(code) == "-":
+        return True
 
-    if not chr(code).isalnum(): return False
+    if not chr(code).isalnum():
+        return False
 
-    if not chr(code).islower(): return False
+    if not chr(code).islower():
+        return False
 
     modifier = pygame.key.get_mods()
     if modifier != 0 and modifier != 4096:
@@ -34,14 +37,14 @@ def is_readable_key_pressed(code) -> bool:
     return True
 
 
-def hira2roma(str) -> str:
+def hira2roma(string) -> str:
     """
     ひらがなを訓令式ローマ字に変換する
 
-    :param str: ひらがな
+    :param string: ひらがな
     :return: 訓令式ローマ字
     """
-    target_roma = romkan.to_kunrei(str)
+    target_roma = romkan.to_kunrei(string)
 
     # romkan.to_kunrei() は使用できない形式で値を返す：
     # 「ん」のタイプに際し、２つ「n」をタイプしなければならない場合は、
@@ -65,7 +68,8 @@ def get_not_halfway_hr(full_hiragana, progress_roma):
     """
 
     # 空文字なら空文字を返す
-    if len(progress_roma) == 0: return ""
+    if len(progress_roma) == 0:
+        return ""
 
     # 全体のひらがなに対し、どこまで打っているのかを見る
     romaji = hira2roma(full_hiragana)
