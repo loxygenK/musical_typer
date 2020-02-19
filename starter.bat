@@ -1,2 +1,2 @@
-python Main.py sampleScore.tsc
+python Main.py scores/sampleScore.tsc
 pause
