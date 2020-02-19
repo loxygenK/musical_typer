@@ -96,9 +96,9 @@ def gs_main_routine(score_data: Score):
         game_info.pos = pos
 
         # 現在の歌詞・ゾーン・セクションを取得
-        lyx_idx = game_info.update_current_lyrics_index()
-        game_info.update_current_zone_index()
-        sct_idx = game_info.update_current_section_index()
+        lyx_idx = game_info.update_current_lyrics_index(pos)
+        sct_idx = game_info.update_current_section_index(pos)
+        game_info.update_current_zone_index(pos)
 
         # ---------------------------
         #   イベント処理／ジャッジ
@@ -142,7 +142,7 @@ def gs_main_routine(score_data: Score):
                             game_info.prev_time = pos
 
                         # 成功処理をする
-                        got_point = game_info.count_success()
+                        got_point = game_info.count_success(pos)
 
                         # 成功エフェクト
                         ui.add_effector(Screen.FOREGROUND_EFFECTOR, 30, "AC/WA", DrawMethodTemplates.slide_fadeout_text,
@@ -276,7 +276,7 @@ def gs_main_routine(score_data: Score):
 
         pygame.draw.rect(ui.screen, more_blackish(BACKGROUND_COLOR, 25), (0, 60, w, 130))
         pygame.draw.rect(ui.screen, more_blackish(BACKGROUND_COLOR, 50),
-                         (0, 60, math.floor(game_info.get_time_remain_ratio() * w), 130))
+                         (0, 60, math.floor(game_info.get_time_remain_ratio(pos) * w), 130))
 
         # レイヤーが変わるのでここで背景エフェクトを更新する
         ui.update_effector(1)

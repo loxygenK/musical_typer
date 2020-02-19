@@ -124,9 +124,6 @@ class GameInfo:
 
     def __init__(self, score, key_length=100):
 
-        # 現在位置
-        self.pos = 0
-
         # 現在の歌詞／ゾーン／セクションの番号
         self.lyrics_index = -1
         self.zone_index = -1
@@ -185,7 +182,7 @@ class GameInfo:
     # ----- メソッド -----
 
     # *** 現在の位置から情報を求める ***
-    def update_current_lyrics_index(self):
+    def update_current_lyrics_index(self, pos):
         """
         与えられた時間に置いて打つべき歌詞のデータを求める。
 
@@ -203,7 +200,7 @@ class GameInfo:
             return False
         else:
             # 現在の歌詞がすでに終わっているか(次の歌詞の開始時間を過ぎているか)
-            if self.score.score[self.lyrics_index + 1][0] > self.pos:
+            if self.score.score[self.lyrics_index + 1][0] > pos:
                 return False
 
         # 次の歌詞を探す
@@ -216,7 +213,7 @@ class GameInfo:
                 continue
 
             # i番目の歌詞の開始時間がposを超えているか
-            if self.score.score[i][0] > self.pos:
+            if self.score.score[i][0] > pos:
 
                 # 歌詞が変わっているか
                 is_lidx_changes = i - 1 != self.lyrics_index
@@ -234,7 +231,7 @@ class GameInfo:
 
         return False
 
-    def update_current_section_index(self):
+    def update_current_section_index(self, pos):
         """
         与えられた時間に置いて打つべき歌詞のデータを求める。
 
@@ -248,14 +245,14 @@ class GameInfo:
         if self.section_index > len(self.score.section) - 1:
             return False
         else:
-            if self.score.section[self.section_index + 1][0] > self.pos:
+            if self.score.section[self.section_index + 1][0] > pos:
                 return False
 
         for i in range(self.section_index, len(self.score.section)):
             if i < 0:
                 continue
 
-            if self.score.section[i][0] >= self.pos:
+            if self.score.section[i][0] >= pos:
 
                 is_lidx_changes = (i - 1) != self.section_index
                 if is_lidx_changes:
@@ -265,7 +262,7 @@ class GameInfo:
         self.section_finished = True
         return False
 
-    def update_current_zone_index(self):
+    def update_current_zone_index(self, pos):
         """
         与えられた時間が属するゾーンを求める。
 
@@ -277,22 +274,22 @@ class GameInfo:
             return
 
         if self.zone_index == len(self.score.zone) - 2:
-            if self.score.zone[self.zone_index + 1][0] > self.pos:
+            if self.score.zone[self.zone_index + 1][0] > pos:
                 self.is_in_zone = True
                 return
             else:
                 self.is_in_zone = False
                 return
         else:
-            if self.score.zone[self.zone_index][0] <= self.pos < self.score.zone[self.zone_index + 1][0]:
+            if self.score.zone[self.zone_index][0] <= pos < self.score.zone[self.zone_index + 1][0]:
                 return
 
         for i in range(self.zone_index, len(self.score.zone)):
             if i < 0:
                 continue
 
-            if self.score.zone[i][0] >= self.pos and self.score.zone[i][2] == "end":
-                if self.score.zone[i - 1][0] <= self.pos and self.score.zone[i - 1][2] == "start":
+            if self.score.zone[i][0] >= pos and self.score.zone[i][2] == "end":
+                if self.score.zone[i - 1][0] <= pos and self.score.zone[i - 1][2] == "start":
 
                     is_lidx_changes = (i - 1) != self.zone_index
                     if is_lidx_changes:
@@ -313,7 +310,7 @@ class GameInfo:
         return
 
     # *** 残り時間情報 ***
-    def get_time_remain_ratio(self):
+    def get_time_remain_ratio(self, pos):
         """
         0～1で、どのくらい時間が経ったかを求める。
 
@@ -323,7 +320,7 @@ class GameInfo:
         next_time = self.score.score[self.lyrics_index + 1][0]
         this_time = self.score.score[self.lyrics_index][0]
 
-        return (next_time - self.pos) / (next_time - this_time)
+        return (next_time - pos) / (next_time - this_time)
 
     # *** ミス率 ****
     @staticmethod
@@ -403,7 +400,7 @@ class GameInfo:
         self.section_count = 0
         self.section_miss = 0
 
-    def count_success(self):
+    def count_success(self, pos):
         """
         タイプ成功をカウントする。
         """
@@ -435,7 +432,7 @@ class GameInfo:
         # ひらがな一つのタイプが終了した?
         if not Romautil.is_halfway(self.target_kana, self.target_roma):
             # キータイプをカウントする
-            self.key_type_tick()
+            self.key_type_tick(pos)
 
         # これ以上打つ必要がないか
         if len(self.target_roma) == 0:
@@ -555,18 +552,18 @@ class GameInfo:
                 return i
         return len(rank_standard) - 1
 
-    def key_type_tick(self):
+    def key_type_tick(self, pos):
         """
         キータイプを記録する。
         :return: なし
         """
 
         if self.prev_time == 0:
-            self.prev_time = self.pos
+            self.prev_time = pos
             return
 
-        self.key_log.append(self.pos - self.prev_time)
-        self.prev_time = self.pos
+        self.key_log.append(pos - self.prev_time)
+        self.prev_time = pos
 
         if len(self.key_log) > self.length:
             del self.key_log[0]
