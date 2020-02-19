@@ -24,7 +24,7 @@ def slide_fadeout_text(current_frame, total_frame, ui: Screen, args):
     """
     スライドして消えていく文字を描画する。
     """
-    w, h = ui.screen_size
+    w, h = pygame.display.get_surface().get_size()
 
     color = args[1] + (255 * (current_frame / total_frame),)
 
@@ -38,23 +38,6 @@ def slide_fadeout_text(current_frame, total_frame, ui: Screen, args):
         args[0],
         color
     )
-
-
-def blink_screen(current_frame, total_frame, ui: Screen, args):
-    """
-    画面を一回点滅させる。
-    """
-
-    color = args[0] + (255 - 255 * (current_frame / total_frame),)
-
-    alpha_info = pygame.Surface(ui.screen_size, pygame.SRCALPHA)
-    # TODO:46~50と64~68をまとめる
-    alpha_info.fill((255, 255, 255, 255 - 255 * (current_frame / total_frame)), special_flags=pygame.BLEND_RGBA_MULT)
-    filler = pygame.Surface(ui.screen_size)
-    filler.fill(color)
-    filler.set_alpha(255 - 255 * (current_frame / total_frame))
-    filler.blit(alpha_info, (0, 0))
-    ui.screen.blit(filler, (0, 0))
 
 
 def blink_rect(current_frame, total_frame, ui: Screen, args):

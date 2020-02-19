@@ -1,6 +1,4 @@
 import pygame
-from PIL import Image, ImageDraw
-from math import tan, radians
 
 from lib.ColorTheme import *
 
@@ -47,17 +45,18 @@ class KeyboardDrawer:
         size = self.key_size + self.key_margin
         for i in range(4):
             key = self.keyboard[i]
-            start = (w - size * len(key)) / 2
             index = key.find(key_char)
             if index != -1:
+                start = (w - size * len(key)) / 2
                 y = self.start_y + i * size
                 x = start + index * size
                 return x, y
 
         return None
 
-    # TODO: this line make short
-    def draw(self, highlight="", *, screen=None, start_y=-1, font=None, key_size=-1, key_margin=-1, width=-1, background_color=(-1, -1, -1)):
+    # noinspection PyPep8,PyPep8,PyPep8,PyPep8,PyPep8,PyPep8,PyPep8,PyPep8,PyPep8,PyPep8,PyPep8
+    def draw(self, highlight="", *,
+             screen=None, start_y=-1, font=None, key_size=-1, key_margin=-1, width=-1, background_color=(-1, -1, -1)):
         """
         キーボードに描画を行う。
         
@@ -73,12 +72,12 @@ class KeyboardDrawer:
         """
 
         # フィールドから継承する値を取得する
-        if screen           is None:         screen = self.screen
-        if start_y          is -1:           start_y = self.start_y
-        if font             is None:         font = self.font
-        if key_size         is -1:           key_size = self.key_size
-        if key_margin       is -1:           key_margin = self.key_margin
-        if width            is -1:           width = self.width
+        if screen is None:  screen = self.screen
+        if start_y is -1:    start_y = self.start_y
+        if font is None:  font = self.font
+        if key_size is -1:    key_size = self.key_size
+        if key_margin is -1:    key_margin = self.key_margin
+        if width is -1:    width = self.width
 
         if background_color is not None and background_color[0] == -1:
             background_color = self.background_color
@@ -116,49 +115,21 @@ class KeyboardDrawer:
 
                 character = font.render(key[j].upper(), True, color)
                 # TODO: divide to some lines
-                screen.blit(character, (start + size * j + key_size // 2 - character.get_width() // 2, start_y + size * i + key_size // 2 - character.get_height() // 2))
+                screen.blit(character, (start + size * j + key_size // 2 - character.get_width() // 2,
+                                        start_y + size * i + key_size // 2 - character.get_height() // 2))
 
 
-@DeprecationWarning
-def arc(surface, color, pos, radius, start_angle, stop_angle):
-    """
-    弧を描画する。めちゃくちゃ重いので使わないほうがいい。
-
-    :param surface: 描画先Surface
-    :param color: 色
-    :param pos: 中心位置
-    :param radius: 半径
-    :param start_angle: 開始角
-    :param stop_angle: 終了角
-    :param width: 枠の太さ
-    :return: なし
-    """
-
-    lu = (pos[0] - radius, int(pos[1] + tan(radians(135)) * radius))
-    rd = (pos[0] + radius, int(pos[1] - tan(radians(-45)) * radius))
-
-    im = Image.new("RGBA", (rd[0] - lu[0] + 1, rd[1] - lu[1]))
-    draw = ImageDraw.Draw(im, "RGBA")
-
-    draw.arc((0, 0, rd[0] - lu[0], rd[1] - lu[1]), start_angle, stop_angle, fill=color)
-    byte = im.tobytes("raw")
-    pyg_im = pygame.image.fromstring(byte, im.size, "RGBA")
-
-    surface.blit(pyg_im, lu)
-
-
-# TODO: 引数とdocstring違うんですけどカス
 def write_limit(screen, pos, left_limit, font, string, color=TEXT_COLOR):
     """
-    左方向に描画制限を設けて、右揃えで文字列を描画する。
+    左方向に制限を設けて、右揃えで文字列を描画する。
 
-    :param screen: 描画対象スクリーン
+    :param screen: スクリーン
+    :param pos: 右揃えでの描画位置
+    :param left_limit: 左方向の制限位置
     :param font: フォント
-    :param string: 描画する文字
-    :param left_limit: 左方向の制限X
-    :param right: 描画基準X
-    :param y: 描画基準Y
-    :return: なし
+    :param string: 描画する文字列
+    :param color: 色
+    :return:
     """
     rect_typed = font.render(string, True, color)
 
@@ -178,17 +149,18 @@ def print_progress(screen, pos, left_limit, font, typed, remain, past_color=None
     タイピングの途中経過を描画する。
 
     :param screen: 描画対象スクリーン
+    :param pos: 色が変わるところ
     :param font: フォント
     :param typed: タイプした文字
     :param remain: 残っている文字
     :param left_limit: 左方向の制限X
-    :param right: 描画基準X
-    :param y: 描画基準Y
+    :param past_color: タイピングが終わった文字の色
+    :param remain_color: タイピングをまだしていない文字の色
     :return:
     """
 
     if past_color is None:
-        past_color = more_whiteish(TEXT_COLOR, 100)
+        past_color = more_whitish(TEXT_COLOR, 100)
     if remain_color is None:
         remain_color = TEXT_COLOR
 
@@ -212,26 +184,3 @@ def write_center_x(window, x, y, font, text, color=(255, 255, 255)):
 
     rect = font.render(text, True, color)
     window.blit(rect, (x - rect.get_width() / 2, y))
-
-
-def print_str(window, x, y, font, text, color=(255, 255, 255)):
-    """
-    画面に文字列を描画する。
-
-    :param window: 描画先ウィンドウ
-    :param x: 基準X
-    :param y: Y
-    :param font: 描画に使用するフォント
-    :param text: 描画する文字列
-    :param color: 描画する文字列の色
-    :return: なし
-    """
-    rect = font.render(text, True, color)
-    if len(color) == 4:
-        alpha_info = pygame.Surface(rect.get_size(), pygame.SRCALPHA)
-        alpha_info.fill((255, 255, 255, 255 - color[3]))
-        surf = rect.copy()
-        surf.blit(alpha_info, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
-        window.blit(surf, (x, y))
-    else:
-        window.blit(rect, (x, y))
